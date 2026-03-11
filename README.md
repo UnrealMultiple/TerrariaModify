@@ -4,7 +4,7 @@
 
 # ⚡ PALLADIUM
 
-**Android Mod Menu Framework**
+**Android Terraria Mod Menu Framework**
 
 <p>
   <img src="https://img.shields.io/badge/Android-9.0+-3DDC84?logo=android&logoColor=white" alt="Android"><br>
@@ -35,7 +35,7 @@
 
 ### 📱 Target Device
 
-- **Android Version:** 9.0+ (API 28)
+- **Android Version:** 10.0+ (API 29)
 - **Architecture:** ARM64 (arm64-v8a) only
 
 ---
@@ -105,8 +105,8 @@
 ### Step 1: Clone Repository
 
 ```bash
-git clone --recursive https://github.com/axios-xiazy/Template-ZIG-Mod-Menu.git
-cd Template-ZIG-Mod-Menu
+git clone --recursive https://github.com/UnrealMultiple/TerrariaModify.git
+cd TerrariaModify
 ```
 
 ### Step 2: Configure SDK Paths
@@ -144,7 +144,7 @@ chmod +x gradlew
 |---------|----------|
 | Debug APK | `app/build/outputs/apk/debug/app-debug.apk` |
 | Release APK | `app/build/outputs/apk/release/app-release.apk` |
-| Native Library | `app/build/intermediates/cmake/release/obj/arm64-v8a/liblib-name.so` |
+| Native Library | `app/build/intermediates/cmake/release/obj/arm64-v8a/libTerrariaModify.so` |
 
 ---
 
@@ -156,42 +156,44 @@ chmod +x gradlew
 Features are defined as strings in `palladium.cpp` using the pipe-delimited format:
 
 ```cpp
-const char *features[] = {
-    // TYPE|PAGE|LABEL|ID|EXTRA
-    
-    // Create a new page tab
-    "PAGE|0|icons/main.png|Main Menu",
-    
-    // Section header
-    "TITLE|0|Player Features",
-    
-    // Toggle switch (returns boolean)
-    "CHECK|0|Enable Hack Map|1",
-    
-    // Slider with range 0-100 (returns integer)
-    "SLIDER|0|Aimbot Range|0|100|2",
-    
-    // Dropdown with options (returns selected index)
-    "SPINNER|0|ESP Style|Classic,Modern,Minimal|3",
-    
-    // Text input (returns string)
-    "INPUT|0|Player Name|4",
-    
-    // Button trigger (calls native function)
-    "BUTTON|0|Dump Libraries|dump_lib_dialog"
-};
+MenuOption{
+        .pages{
+            PageOption{
+                .id = 0,
+                .title = "玩家功能",
+                .icon = "icons/func1.png",
+                .items = {
+                    TitleItem{
+                        .label = "Player"
+                    },
+                    CheckItem{
+                        .label = "上帝模式",
+                        .id = 100
+                    },
+                    CheckItem{
+                        .label = "无限召唤",
+                        .id = 101
+                    },
+                    CheckItem{
+                        .label = "无限范围",
+                        .id = 102,
+                    }
+                }
+            }
+        }
+    };
 ```
 
 **Format Specification:**
 
-| Type | Format | Parameters | Returns |
+| Type | Item | Parameters | Returns |
 |------|--------|------------|---------|
-| `PAGE` | `PAGE|idx|icon_path|title` | page index, icon, title | N/A |
-| `CHECK` | `CHECK|page|label|id` | page, label, unique id | boolean |
-| `SLIDER` | `SLIDER|page|label|min|max|id` | page, label, min, max, id | integer |
-| `SPINNER` | `SPINNER|page|label|opt1,opt2|id` | page, label, options, id | index |
-| `INPUT` | `INPUT|page|label|id` | page, label, id | string |
-| `BUTTON` | `BUTTON|page|label|callback` | page, label, callback name | trigger |
+| `PAGE` | PageOption | page index, icon, title | N/A |
+| `CHECK` | CheckItem | page, label, unique id | boolean |
+| `SLIDER` | SlderItem | page, label, min, max, id | integer |
+| `SPINNER` | SpinerItem | page, label, options, id | index |
+| `INPUT` | InputTextItem | page, label, id | string |
+| `BUTTON` | ButtonItem | page, label, callback name | trigger |
 
 **Handling Callbacks:**
 
@@ -308,18 +310,6 @@ __attribute__((constructor))
 void init() {
     std::thread(main_thread).detach();
 }
-```
-</details>
-
-<details>
-<summary><h3>💉 Injection Methods</h3></summary>
-
-#### Method A: APK Modding (Recommended for Beginners)
-
-1. Inject smali code
-Find onCreate method and add : 
-```smali
-invoke-static {p0}, Lzig/cheat/qq/ϟ;->ϟ(Landroid/content/Context;)V
 ```
 </details>
 
