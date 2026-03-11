@@ -10,7 +10,7 @@
 
 class SpriteViewMatrix : public TerrariaBase<SpriteViewMatrix> {
 private:
-    SpriteViewMatrix() : TerrariaBase("Terraria.Graphics", "SpriteViewMatrix") {
+    SpriteViewMatrix() : TerrariaBase(oxorany("Terraria.Graphics"), oxorany("SpriteViewMatrix")) {
 #define X(type, name) INIT_PROPERTY(name)
         INSTANCE_SPRITEVIEWMATRIX_PROPERTY_LIST
 #undef X

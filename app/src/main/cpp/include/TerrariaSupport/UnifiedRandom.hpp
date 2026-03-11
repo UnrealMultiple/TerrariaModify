@@ -6,8 +6,8 @@
 
 class UnifiedRandom : public TerrariaBase<UnifiedRandom> {
 private:
-    UnifiedRandom() : TerrariaBase("Terraria.Utilities", "UnifiedRandom") {
-        Next_m = _class.GetMethod("Next", {"minValue", "maxValue"});
+    UnifiedRandom() : TerrariaBase(oxorany("Terraria.Utilities"), oxorany("UnifiedRandom")) {
+        Next_m = _class.GetMethod(oxorany("Next"), {oxorany("minValue"), oxorany("maxValue")});
     }
     friend class TerrariaBase<UnifiedRandom>;
 

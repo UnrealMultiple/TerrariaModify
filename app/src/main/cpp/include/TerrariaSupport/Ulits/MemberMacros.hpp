@@ -1,8 +1,8 @@
-// MemberMacros.hpp
 #pragma once
 
 #include <utility>      // std::forward
 #include <type_traits>  // std::is_void_v (C++17)
+#include "oxorany/oxorany.h"
 #include "EventUpdateHandler.hpp"
 
 // ==================== 字段声明 ====================
@@ -18,9 +18,9 @@
 #define DECLARE_STATIC_METHOD(returnType, name) BNM::Method<returnType> name##_m;
 
 // ==================== 字段/属性初始化 ====================
-#define INIT_FIELD(name) name##_f = _class.GetField(#name);
-#define INIT_PROPERTY(name) name##_p = _class.GetProperty(#name);
-#define INIT_METHOD(name) name##_m = _class.GetMethod(#name);
+#define INIT_FIELD(name) name##_f = _class.GetField(oxorany(#name));
+#define INIT_PROPERTY(name) name##_p = _class.GetProperty(oxorany(#name));
+#define INIT_METHOD(name) name##_m = _class.GetMethod(oxorany(#name));
 
 // 重载方法初始化 - 支持任意数量参数
 #define INIT_METHOD_OVERLOAD(name, ...) name##_m = _class.GetMethod(#name, {__VA_ARGS__});

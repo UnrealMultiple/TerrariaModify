@@ -8,7 +8,7 @@
 
 class NPCSpawnParams : public TerrariaBase<NPCSpawnParams> {
 private:
-    NPCSpawnParams() : TerrariaBase("Terraria", "NPCSpawnParams") {
+    NPCSpawnParams() : TerrariaBase(oxorany("Terraria"), oxorany("NPCSpawnParams")) {
 
     }
     friend class TerrariaBase<NPCSpawnParams>;

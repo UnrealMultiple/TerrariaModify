@@ -46,7 +46,6 @@ inline void (*old_ItemCheck_StartActualUse)(BNM::UnityEngine::Object*, BNM::Unit
 inline void (*old_Draw)(BNM::UnityEngine::Object* instance, void* texture, BNM::Structures::Unity::Vector2* position, void* sourceRectangle, VertexColors* color, void* effects);
 
 inline void DrawHOOK(BNM::UnityEngine::Object* instance, void* texture, BNM::Structures::Unity::Vector2* position, void* sourceRectangle, VertexColors* color, void* effects){
-    LOGI("高亮");
     auto coolr = VertexColors(Color(BNM::Structures::Unity::Vector3(255, 255, 255)));
     old_Draw(instance, texture, position, sourceRectangle, &coolr,  effects);
 }

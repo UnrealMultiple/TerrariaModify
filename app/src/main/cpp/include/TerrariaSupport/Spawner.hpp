@@ -6,8 +6,8 @@ class Spawner{
 
 private:
     Spawner(){
-        _class = NPC::Instance()._class.GetInnerClass("Spawner");
-        GetSpawnRate_m = _class.GetMethod("GetSpawnRate");
+        _class = NPC::Instance()._class.GetInnerClass(oxorany("Spawner"));
+        GetSpawnRate_m = _class.GetMethod(oxorany("GetSpawnRate"));
     }
 
     BNM::Class _class;

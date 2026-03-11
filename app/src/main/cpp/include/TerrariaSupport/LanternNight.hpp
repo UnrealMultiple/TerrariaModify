@@ -11,7 +11,7 @@
 
 class LanternNight : public TerrariaBase<LanternNight> {
 private:
-    LanternNight() : TerrariaBase("Terraria.GameContent.Events", "LanternNight") {
+    LanternNight() : TerrariaBase(oxorany("Terraria.GameContent.Events"), oxorany("LanternNight")) {
 #define T(returnType, name) name##_m = _class.GetMethod(#name);
         STATIC_WORLDGEN_METHODS(T)
 #undef T

@@ -8,7 +8,7 @@
 
 class Lang : public TerrariaBase<Lang> {
 private:
-    Lang() : TerrariaBase("Terraria", "Lang") {
+    Lang() : TerrariaBase(oxorany("Terraria"), oxorany("Lang")) {
 #define T(returnType, name) INIT_METHOD(name)
         STATIC_LANG_METHOD_LIST
 #undef T

@@ -18,7 +18,7 @@
 
 class WorldGen : public TerrariaBase<WorldGen> {
 private:
-    WorldGen() : TerrariaBase("Terraria", "WorldGen") {
+    WorldGen() : TerrariaBase(oxorany("Terraria"), oxorany("WorldGen")) {
 #define T(returnType, name) name##_m = _class.GetMethod(#name);
         STATIC_WORLDGEN_METHODS(T)
 #undef T
@@ -27,7 +27,7 @@ private:
         STATIC_WORLDGEN_FIELD
 #undef X
 
-        InWorld_m = _class.GetMethod("InWorld", {"x", "y", "fluff"});
+        InWorld_m = _class.GetMethod(oxorany("InWorld"), {oxorany("x"), oxorany("y"), oxorany("fluff")});
     }
     friend class TerrariaBase<WorldGen>;
 

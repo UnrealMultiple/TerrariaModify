@@ -8,7 +8,7 @@
 
 class TileDrawing : public TerrariaBase<TileDrawing> {
 private:
-    TileDrawing() : TerrariaBase("Terraria.GameContent.Drawing", "TileDrawing") {
+    TileDrawing() : TerrariaBase(oxorany("Terraria.GameContent.Drawing"), oxorany("TileDrawing")) {
 #define T(returnType, name) name##_m = _class.GetMethod(#name);
         INSTANCE_TILEDRAW_METHODS(T)
 #undef T

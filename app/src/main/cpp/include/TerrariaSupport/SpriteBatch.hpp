@@ -10,11 +10,11 @@
 
 class SpriteBatch : public TerrariaBase<SpriteBatch> {
 private:
-    SpriteBatch() : TerrariaBase("Microsoft.Xna.Framework.Graphics.SpriteBatch", "SpriteBatch") {
-        Draw_V2ScaleV2_m = _class.GetMethod("Draw", { "texture", "position", "sourceRectangle", "color", "rotation", "origin", "scale", "effects", "layerDepth" });
-        Draw_V2ScaleFloat_m = _class.GetMethod("Draw", { "texture", "position", "sourceRectangle", "color", "rotation", "origin", "scale", "effects", "layerDepth" });
-        Draw_Fast_Color_m = _class.GetMethod("Draw_Fast", { "texture", "position", "srcRect", "color", "effects" });
-        Draw_Fast_VertexColors_m = _class.GetMethod("Draw_Fast", { "texture", "position", "srcRect", "color", "effects" });
+    SpriteBatch() : TerrariaBase(oxorany("Microsoft.Xna.Framework.Graphics.SpriteBatch"), oxorany("SpriteBatch")) {
+        Draw_V2ScaleV2_m = _class.GetMethod(oxorany("Draw"), { oxorany("texture"), oxorany("position"), oxorany("sourceRectangle"), oxorany("color"), oxorany("rotation"), oxorany("origin"), oxorany("scale"), oxorany("effects"), oxorany("layerDepth") });
+        Draw_V2ScaleFloat_m = _class.GetMethod(oxorany("Draw"), { oxorany("texture"), oxorany("position"), oxorany("sourceRectangle"), oxorany("color"), oxorany("rotation"), oxorany("origin"), oxorany("scale"), oxorany("effects"), oxorany("layerDepth") });
+        Draw_Fast_Color_m = _class.GetMethod(oxorany("Draw_Fast"), { oxorany("texture"), oxorany("position"), oxorany("srcRect"), oxorany("color"), oxorany("effects") });
+        Draw_Fast_VertexColors_m = _class.GetMethod(oxorany("Draw_Fast"), { oxorany("texture"), oxorany("position"), oxorany("srcRect"), oxorany("color"), oxorany("effects") });
     }
     friend class TerrariaBase<SpriteBatch>;
 

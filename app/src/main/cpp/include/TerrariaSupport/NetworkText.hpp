@@ -6,7 +6,7 @@
 
 class NetworkText : public TerrariaBase<NetworkText> {
 private:
-    NetworkText() : TerrariaBase("Terraria.Localization", "NetworkText") {
+    NetworkText() : TerrariaBase(oxorany("Terraria.Localization"), oxorany("NetworkText")) {
 #define T(returnType, name) INIT_METHOD(name)
         STATIC_NETWORK_TEXT_METHOD_LIST
 #undef T

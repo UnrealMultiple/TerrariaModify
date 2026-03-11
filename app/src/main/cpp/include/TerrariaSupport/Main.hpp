@@ -56,7 +56,7 @@
 
 class Main : public TerrariaBase<Main> {
 private:
-    Main() : TerrariaBase("Terraria", "Main") {
+    Main() : TerrariaBase(oxorany("Terraria"), oxorany("Main")) {
 #define S(type, name) INIT_FIELD(name)
         MAIN_STATIC_FIELD_LIST
 #undef S
@@ -99,15 +99,15 @@ public:
 
     static void UnLockAchievements(){
         EventUpdateHandler::GetInstance().AddEventR([] () -> void {
-            auto AchievementManager_cls = BNM::Class("Terraria.Achievements", "AchievementManager");
-            auto Achievement_cls = BNM::Class("Terraria.Achievements", "Achievement");
-            auto AchievementCondition_cls = BNM::Class("Terraria.Achievements", "AchievementCondition ");
-            BNM::Method<BNM::Structures::Mono::List<BNM::UnityEngine::Object*>*> CreateAchievementsList_m = AchievementManager_cls.GetMethod("CreateAchievementsList");
-            BNM::Property<bool> IsCompleted_p = Achievement_cls.GetProperty("IsCompleted");
-            BNM::Field<BNM::Structures::Mono::Dictionary<BNM::Structures::Mono::String*, BNM::UnityEngine::Object*>*> _conditions_p = Achievement_cls.GetField("_conditions");
-            BNM::Method<void> Save_m = AchievementManager_cls.GetMethod("Save");
-            BNM::Property<bool> IsCompleted2_p = AchievementCondition_cls.GetProperty("IsCompleted");
-            BNM::Method<void> Complete_m = AchievementCondition_cls.GetMethod("Complete");
+            auto AchievementManager_cls = BNM::Class(oxorany("Terraria.Achievements"), oxorany("AchievementManager"));
+            auto Achievement_cls = BNM::Class(oxorany("Terraria.Achievements"), oxorany("Achievement"));
+            auto AchievementCondition_cls = BNM::Class(oxorany("Terraria.Achievements"), oxorany("AchievementCondition"));
+            BNM::Method<BNM::Structures::Mono::List<BNM::UnityEngine::Object*>*> CreateAchievementsList_m = AchievementManager_cls.GetMethod(oxorany("CreateAchievementsList"));
+            BNM::Property<bool> IsCompleted_p = Achievement_cls.GetProperty(oxorany("IsCompleted"));
+            BNM::Field<BNM::Structures::Mono::Dictionary<BNM::Structures::Mono::String*, BNM::UnityEngine::Object*>*> _conditions_p = Achievement_cls.GetField(oxorany("_conditions"));
+            BNM::Method<void> Save_m = AchievementManager_cls.GetMethod(oxorany("Save"));
+            BNM::Property<bool> IsCompleted2_p = AchievementCondition_cls.GetProperty(oxorany("IsCompleted"));
+            BNM::Method<void> Complete_m = AchievementCondition_cls.GetMethod(oxorany("Complete"));
             auto manager = Main::getAchievementsSync();
             auto list = CreateAchievementsList_m[manager]();
             for (auto achievement  : list->ToVector()) {
@@ -125,14 +125,14 @@ public:
 
     static void LigthMap(){
         EventUpdateHandler::GetInstance().AddEventR([] () -> void{
-            auto TileData_cls = BNM::Class("Terraria","TileData");
-            BNM::Field<int> width_f = TileData_cls.GetField("_width");
-            BNM::Field<int> heigth_f = TileData_cls.GetField("_height");
+            auto TileData_cls = BNM::Class(oxorany("Terraria"),oxorany("TileData"));
+            BNM::Field<int> width_f = TileData_cls.GetField(oxorany("_width"));
+            BNM::Field<int> heigth_f = TileData_cls.GetField(oxorany("_height"));
             auto width = width_f[Main::Instance().tile_f()]();
             auto heigth = heigth_f[Main::Instance().tile_f()]();
-            auto WorldMap_cls = BNM::Class("Terraria.Map","WorldMap");
-            BNM::Method<void> Update = WorldMap_cls.GetMethod("Update");
-            BNM::Method<void> Load = WorldMap_cls.GetMethod("Load");
+            auto WorldMap_cls = BNM::Class(oxorany("Terraria.Map"),oxorany("WorldMap"));
+            BNM::Method<void> Update = WorldMap_cls.GetMethod(oxorany("Update"));
+            BNM::Method<void> Load = WorldMap_cls.GetMethod(oxorany("Load"));
             for (int w = 0; w < width; ++w) {
                 for (int i = 0; i < heigth; ++i) {
                     Update[Main::Instance().Map_p()](w,i,255);

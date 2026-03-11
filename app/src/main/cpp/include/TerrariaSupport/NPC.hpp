@@ -29,7 +29,7 @@
 
 class NPC : public TerrariaBase<NPC> {
 private:
-    NPC() : TerrariaBase("Terraria", "NPC") {
+    NPC() : TerrariaBase(oxorany("Terraria"), oxorany("NPC")) {
     #define X(type, name) INIT_FIELD(name)
         INSTANCE_NPC_FIELD_LIST
     #undef X

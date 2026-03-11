@@ -11,7 +11,7 @@
 
 class LanguageManager : public TerrariaBase<LanguageManager> {
 private:
-    LanguageManager() : TerrariaBase("Terraria.Localization", "LanguageManager") {
+    LanguageManager() : TerrariaBase(oxorany("Terraria.Localization"), oxorany("LanguageManager")) {
 #define Z(returnType, name) INIT_METHOD(name)
         INSTANCE_LANGUAGE_MANAGER_METHOD_LIST
 #undef Z

@@ -9,6 +9,7 @@
 #include "BNM/UnityStructures/Vector2.hpp"
 #include "BNM/ComplexMonoStructures.hpp"
 #include "Tools/Logger.hpp"
+#include "oxorany/oxorany.h"
 #include <type_traits>
 
 template<typename Derived>

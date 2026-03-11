@@ -53,16 +53,16 @@ struct PacketData {
 
 class NetMessage : public TerrariaBase<NetMessage> {
 private:
-    NetMessage() : TerrariaBase("Terraria", "NetMessage") {
+    NetMessage() : TerrariaBase(oxorany("Terraria"), oxorany("NetMessage")) {
         // 初始化普通方法
 #define T(returnType, name) name##_m = _class.GetMethod(#name);
         STATIC_NET_MESSAGE_METHODS(T)
 #undef T
 
         // 初始化重载方法 - 直接指定参数列表
-        SendTileSquare_ByXY_m = _class.GetMethod("SendTileSquare", {"whoAmi", "tileX", "tileY", "xSize", "ySize", "changeType"});
-        SendTileSquare_BySize_m = _class.GetMethod("SendTileSquare", {"whoAmi", "tileX", "tileY", "centeredSquareSize", "changeType"});
-        SendTileSquare_Simple_m = _class.GetMethod("SendTileSquare", {"whoAmi", "tileX", "tileY", "changeType"});
+        SendTileSquare_ByXY_m = _class.GetMethod(oxorany("SendTileSquare"), {oxorany("whoAmi"), oxorany("tileX"), oxorany("tileY"), oxorany("xSize"), oxorany("ySize"), oxorany("changeType")});
+        SendTileSquare_BySize_m = _class.GetMethod(oxorany("SendTileSquare"), {oxorany("whoAmi"), oxorany("tileX"), oxorany("tileY"), oxorany("centeredSquareSize"), oxorany("changeType")});
+        SendTileSquare_Simple_m = _class.GetMethod(oxorany("SendTileSquare"), {oxorany("whoAmi"), oxorany("tileX"), oxorany("tileY"), oxorany("changeType")});
     }
     friend class TerrariaBase<NetMessage>;
 

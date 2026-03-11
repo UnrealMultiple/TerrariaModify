@@ -1,6 +1,7 @@
 #pragma once
 #include "TerrariaBase.hpp"
 
+
 #define INSTANCE_GAME_PROPERTY_LIST \
     Y(bool, IsActive)
 
@@ -9,7 +10,7 @@
 
 class Game : public TerrariaBase<Game> {
 private:
-    Game() : TerrariaBase("Microsoft.Xna.Framework.Game", "Game") {
+    Game() : TerrariaBase(oxorany("Microsoft.Xna.Framework.Game"), oxorany("Game")) {
 #define Y(type, name) INIT_PROPERTY(name)
         INSTANCE_GAME_PROPERTY_LIST
 #undef Y

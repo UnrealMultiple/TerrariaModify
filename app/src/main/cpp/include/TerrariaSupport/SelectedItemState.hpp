@@ -5,9 +5,9 @@ class SelectedItemState{
 
 private:
     SelectedItemState(){
-        _class = Player::Instance()._class.GetInnerClass("SelectedItemState");
-        Select_m = _class.GetMethod("Select");
-        Update_m = _class.GetMethod("Update");
+        _class = Player::Instance()._class.GetInnerClass(oxorany("SelectedItemState"));
+        Select_m = _class.GetMethod(oxorany("Select"));
+        Update_m = _class.GetMethod(oxorany("Update"));
     }
 
     BNM::Class _class;

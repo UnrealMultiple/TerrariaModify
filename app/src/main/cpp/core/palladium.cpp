@@ -37,45 +37,45 @@ MenuOption buildMenu() {
         .pages{
             PageOption{
                 .id = 0,
-                .title = "玩家功能",
+                .title = oxorany("玩家功能"),
                 .icon = "icons/func1.png",
                 .items = {
                     TitleItem{
-                            .label = "Player"
+                            .label = oxorany("Player")
                     },
                     CheckItem{
-                            .label = "上帝模式",
+                            .label = oxorany("上帝模式"),
                             .id = 100
                     },
                     CheckItem{
-                            .label = "无限召唤",
+                            .label = oxorany("无限召唤"),
                             .id = 101
                     },
                     CheckItem{
-                            .label = "无限范围",
+                            .label = oxorany("无限范围"),
                             .id = 102,
                     },
                     CheckItem{
-                            .label = "无限魔力",
+                            .label = oxorany("无限魔力"),
                             .id = 103,
                     },
                     CheckItem{
-                            .label = "自动攻击",
+                            .label = oxorany("自动攻击"),
                             .id = 104,
                     },
                     TitleItem{
-                        .label = "TILE"
+                        .label = oxorany("TILE")
                     },
                     CheckItem{
-                            .label = "范围挖掘",
+                            .label = oxorany("范围挖掘"),
                             .id = 105,
                     },
                     CheckItem{
-                            .label = "破坏墙体",
+                            .label = oxorany("破坏墙体"),
                             .id = 106,
                     },
                     SliderItem{
-                        .label = "破坏半径",
+                        .label = oxorany("破坏半径"),
                         .id = 107,
                         .min = 1,
                         .max = 100,
@@ -85,84 +85,84 @@ MenuOption buildMenu() {
             },
             PageOption{
                 .id = 1,
-                .title = "世界功能",
+                .title = oxorany("世界功能"),
                 .icon = "icons/func2.png",
                 .items = {
                     TitleItem{
-                        .label = "World"
+                        .label = oxorany("World")
                     },
                     CheckItem{
-                        .label = "点亮地图",
+                        .label = oxorany("点亮地图"),
                         .id = 200
                     },
                     CheckItem{
-                        .label = "世界传送",
+                        .label = oxorany("世界传送"),
                         .id = 201
                     },
                     TitleItem{
-                      .label = "Time"
+                      .label = oxorany("Time")
                     },
                     InputTextItem{
-                        .label = "设置时间",
+                        .label = oxorany("设置时间"),
                         .id = 202,
-                        .placeholder = "24小时格式",
-                        .default_value = "6:30"
+                        .placeholder = oxorany("24小时格式"),
+                        .default_value = oxorany("6:30")
                     },
                     TitleItem{
-                        .label = "World Event"
+                        .label = oxorany("World Event")
                     },
                     SpinnerItem{
-                        .label = "世界事件",
+                        .label = oxorany("世界事件"),
                         .id = 203,
-                        .options = {"哥布林入侵", "雪人入侵", "海盗入侵",  "火星人", "南瓜月", "霜月", "陨石", "满月", "血月", "日食", "沙尘暴", "雨天", "流星雨", "大风天", "史莱姆雨", "硬币雨", "灯笼夜" }
+                        .options = {oxorany("哥布林入侵"), oxorany("雪人入侵"), oxorany("海盗入侵"),  oxorany("火星人"), oxorany("南瓜月"), oxorany("霜月"), oxorany("陨石"), oxorany("满月"), oxorany("血月"), oxorany("日食"), oxorany("沙尘暴"), oxorany("雨天"), oxorany("流星雨"), oxorany("大风天"), oxorany("史莱姆雨"), oxorany("硬币雨"), oxorany("灯笼夜") }
                     },
                     ButtonItem{
-                        .label = "生成事件",
+                        .label = oxorany("生成事件"),
                         .id = 204,
-                        .action = "default"
+                        .action = oxorany("default")
                     },
                     ButtonItem{
-                            .label = "停止事件",
+                            .label = oxorany("停止事件"),
                             .id = 205,
-                            .action = "default"
+                            .action = oxorany("default")
                     }
                 }
             },
             PageOption{
                 .id = 2,
-                .title = "NPC功能",
+                .title = oxorany("NPC功能"),
                 .icon = "icons/func3.png",
                 .items = {
                     TitleItem{
-                            .label ="KILL"
+                            .label = oxorany("KILL")
                     },
                     CheckItem{
-                            .label = "击杀敌方NPC",
+                            .label = oxorany("击杀敌方NPC"),
                             .id = 300
                     },
                     CheckItem{
-                            .label = "击杀所有NPC",
+                            .label = oxorany("击杀所有NPC"),
                             .id = 301
                     },
                     TitleItem{
-                            .label ="Spawn"
+                            .label =oxorany("Spawn")
                     },
                     SliderItem{
-                            .label = "生成延迟",
+                            .label = oxorany("生成延迟"),
                             .id = 302,
                             .min = 1,
                             .max = 1000,
                             .defalutValue = 600
                     },
                     SliderItem{
-                            .label = "生成阈值",
+                            .label = oxorany("生成阈值"),
                             .id = 303,
                             .min = 0,
                             .max = 200,
                             .defalutValue = 5
                     },
                     CheckItem{
-                            .label = "保持修改",
+                            .label = oxorany("保持修改"),
                             .id = 304
                     },
 
@@ -171,108 +171,108 @@ MenuOption buildMenu() {
             },
             PageOption{
                 .id = 3,
-                .title = "自动钓鱼",
+                .title = oxorany("自动钓鱼"),
                 .icon = "icons/fish.png",
                 .items = {
                     TitleItem{
-                        .label = "FISH"
+                        .label = oxorany("FISH")
                     },
                     CheckItem{
-                        .label = "启用钓鱼",
+                        .label = oxorany("启用钓鱼"),
                         .id = 400,
                     },
                     CheckItem{
-                            .label = "接受物品",
+                            .label = oxorany("接受物品"),
                             .id = 401,
                     },
                     CheckItem{
-                            .label = "接受npc",
+                            .label = oxorany("接受npc"),
                             .id = 402,
                     },
                     CheckItem{
-                            .label = "接受宝匣",
+                            .label = oxorany("接受宝匣"),
                             .id = 403,
                     },
                     CheckItem{
-                            .label = "接受普通",
+                            .label = oxorany("接受普通"),
                             .id = 404,
                     },
                     CheckItem{
-                            .label = "接受常见",
+                            .label = oxorany("接受常见"),
                             .id = 405,
                     },
                     CheckItem{
-                            .label = "接受罕见",
+                            .label = oxorany("接受罕见"),
                             .id = 406,
                     },
                     CheckItem{
-                            .label = "接受稀有",
+                            .label = oxorany("接受稀有"),
                             .id = 407,
                     },
                     CheckItem{
-                            .label = "接受神话",
+                            .label = oxorany("接受神话"),
                             .id = 408,
                     },
                     CheckItem{
-                            .label = "接受传奇",
+                            .label = oxorany("接受传奇"),
                             .id = 409,
                     },
                     CheckItem{
-                            .label = "接受任务鱼",
+                            .label = oxorany("接受任务鱼"),
                             .id = 410,
                     },
                     CheckItem{
-                            .label = "使用当前光标位置",
+                            .label = oxorany("使用当前光标位置"),
                             .id = 411,
                     }
                 }
             },
             PageOption{
                 .id = 4,
-                .title = "工具",
+                .title = oxorany("工具"),
                 .icon = "icons/tools.png",
                 .items = {
                     TitleItem{
-                            .label = "TOOLS"
+                            .label = oxorany("TOOLS")
                         },
                     ButtonItem{
-                            .label = "物品生成器",
-                            .action = "item_generator_dialog",
+                            .label = oxorany("物品生成器"),
+                            .action = oxorany("item_generator_dialog"),
                             .color = static_cast<int>(0xFF708090)
                         },
                     ButtonItem{
-                            .label = "物品修改器",
-                            .action = "item_modifier_dialog",
+                            .label = oxorany("物品修改器"),
+                            .action = oxorany("item_modifier_dialog"),
                             .color = static_cast<int>(0xFFFF8C00)
                         },
                     ButtonItem{
-                            .label = "buff生成器",
-                            .action = "buff_generator_dialog",
+                            .label = oxorany("buff生成器"),
+                            .action = oxorany("buff_generator_dialog"),
                             .color = static_cast<int>(0xFFAFEEEE)
                     },
                     ButtonItem{
-                            .label = "Boss生成",
-                            .action = "npc_generator_dialog",
+                            .label = oxorany("Boss生成"),
+                            .action = oxorany("npc_generator_dialog"),
                             .color = static_cast<int>(0xFFCD5C5C)
                     },
                     TitleItem{
-                            .label = "APPLY PROJICTILE"
+                            .label = oxorany("APPLY PROJICTILE")
                     },
                     CheckItem{
-                        .label = "附加弹幕",
+                        .label = oxorany("附加弹幕"),
                         .id = 500
                     },
                     ButtonItem{
-                            .label = "附加配置",
-                            .action = "projectile_apply_dialog",
+                            .label = oxorany("附加配置"),
+                            .action = oxorany("projectile_apply_dialog"),
                             .color = static_cast<int>(0xFFCD5C5C)
                     },
                     TitleItem{
-                            .label = "LUA ENGINE"
+                            .label = oxorany("LUA ENGINE")
                         },
                     ButtonItem{
-                            .label = "Lua脚本",
-                            .action = "lua_script_dialog",
+                            .label = oxorany("Lua脚本"),
+                            .action = oxorany("lua_script_dialog"),
                             .color = static_cast<int>(0xFF10B981)
                     }
                 }

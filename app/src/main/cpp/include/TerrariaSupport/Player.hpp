@@ -39,7 +39,7 @@
 
 class Player : public TerrariaBase<Player> {
 private:
-    Player() : TerrariaBase("Terraria", "Player") {
+    Player() : TerrariaBase(oxorany("Terraria"), oxorany("Player")) {
         #define X(type, name) INIT_FIELD(name)
                 INSTANCE_PLAYER_FIELD_LIST
         #undef X
@@ -86,15 +86,15 @@ public:
 
     static void GodMod(bool enabled){
         EventUpdateHandler::GetInstance().AddEventR([enabled] () -> void{
-            auto CreativePowers = BNM::Class("Terraria.GameContent.Creative", "CreativePowers");
-            auto APerPlayerTogglePower = CreativePowers.GetInnerClass("APerPlayerTogglePower");
-            BNM::Method<void> SetEnabledState = APerPlayerTogglePower.GetMethod("SetEnabledState");
-            auto object = CreativePowers.GetInnerClass("GodmodePower");
+            auto CreativePowers = BNM::Class(oxorany("Terraria.GameContent.Creative"), oxorany("CreativePowers"));
+            auto APerPlayerTogglePower = CreativePowers.GetInnerClass(oxorany("APerPlayerTogglePower"));
+            BNM::Method<void> SetEnabledState = APerPlayerTogglePower.GetMethod(oxorany("SetEnabledState"));
+            auto object = CreativePowers.GetInnerClass(oxorany("GodmodePower"));
 
-            auto CreativePowerManager = BNM::Class("Terraria.GameContent.Creative", "CreativePowerManager");
-            BNM::Property<BNM::UnityEngine::Object*> instance = CreativePowerManager.GetProperty("Instance");
+            auto CreativePowerManager = BNM::Class(oxorany("Terraria.GameContent.Creative"), oxorany("CreativePowerManager"));
+            BNM::Property<BNM::UnityEngine::Object*> instance = CreativePowerManager.GetProperty(oxorany("Instance"));
 
-            auto method = CreativePowerManager.GetMethod("GetPower");
+            auto method = CreativePowerManager.GetMethod(oxorany("GetPower"));
             BNM::Method<BNM::UnityEngine::Object*> GetPower = method.GetGeneric({object});
             auto index = Entity::getwhoAmISync(Main::getLocalPlayerSync());
             auto ins1 = GetPower[instance()]();

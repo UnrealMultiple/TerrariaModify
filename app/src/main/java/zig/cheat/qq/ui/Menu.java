@@ -75,7 +75,7 @@ public class Menu {
     private static final TimeInterpolator EASE_IN_OUT = new AccelerateDecelerateInterpolator();
     private static final TimeInterpolator EASE_OUT = new DecelerateInterpolator(1.5f);
 
-    private static final boolean DEBUG_ALWAYS_SHOW = false;
+    private static final boolean DEBUG_ALWAYS_SHOW = false;  // 设置为 true 可在任何情况下显示菜单，方便调试
 
     private Context context;
     private WindowManager windowManager;

@@ -43,7 +43,7 @@ struct ItemResult {
 
 class Item : public TerrariaBase<Item> {
 private:
-    Item() : TerrariaBase("Terraria", "Item") {
+    Item() : TerrariaBase(oxorany("Terraria"), oxorany("Item")) {
 
 #define X(type, name) name##_f = _class.GetField(#name);
         INSTANCE_ITEM_FIELDS(X)
@@ -56,7 +56,7 @@ private:
 #define Z(returnType, name) name##_m = _class.GetMethod(#name);
         INSTANCE_ITEM_METHODS(Z)
 #undef Z
-        NewItem_m = _class.GetMethod("NewItem", {"source", "X", "Y", "Width", "Height", "Type", "Stack", "noBroadcast", "pfix", "noGrabDelay"});
+        NewItem_m = _class.GetMethod(oxorany("NewItem"), {oxorany("source"), oxorany("X"), oxorany("Y"), oxorany("Width"), oxorany("Height"), oxorany("Type"), oxorany("Stack"), oxorany("noBroadcast"), oxorany("pfix"), oxorany("noGrabDelay")});
     }
     friend class TerrariaBase<Item>;
 

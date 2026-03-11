@@ -14,7 +14,7 @@
 
 class Entity : public TerrariaBase<Entity> {
 private:
-    Entity() : TerrariaBase("Terraria", "Entity") {
+    Entity() : TerrariaBase(oxorany("Terraria"), oxorany("Entity")) {
 #define X(type, name) INIT_FIELD(name)
         INSTANCE_ENTITY_FIELD_LIST
 #undef X

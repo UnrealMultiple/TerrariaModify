@@ -6,7 +6,7 @@
 
 class Netplay : public TerrariaBase<Netplay> {
 private:
-    Netplay() : TerrariaBase("Terraria", "Netplay") {
+    Netplay() : TerrariaBase(oxorany("Terraria"), oxorany("Netplay")) {
 #define T(returnType, name) INIT_METHOD(name)
         STATIC_NETPLAY_METHOD_LIST
 #undef T

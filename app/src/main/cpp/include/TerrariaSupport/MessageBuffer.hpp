@@ -6,7 +6,7 @@
 
 class MessageBuffer : public TerrariaBase<MessageBuffer> {
 private:
-    MessageBuffer() : TerrariaBase("Terraria", "MessageBuffer") {
+    MessageBuffer() : TerrariaBase(oxorany("Terraria"), oxorany("MessageBuffer")) {
 #define Z(returnType, name) INIT_METHOD(name)
         INSTANCE_MESSAGE_BUFFER_METHOD_LIST
 #undef Z

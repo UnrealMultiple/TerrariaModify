@@ -13,7 +13,7 @@
 
 class Sandstorm : public TerrariaBase<Sandstorm> {
 private:
-    Sandstorm() : TerrariaBase("Terraria.GameContent.Events", "Sandstorm") {
+    Sandstorm() : TerrariaBase(oxorany("Terraria.GameContent.Events"), oxorany("Sandstorm")) {
 #define T(returnType, name) name##_m = _class.GetMethod(#name);
         STATIC_WORLDGEN_METHODS(T)
 #undef T

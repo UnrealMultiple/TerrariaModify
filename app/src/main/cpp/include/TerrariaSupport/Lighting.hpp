@@ -7,9 +7,9 @@
 
 class Lighting : public TerrariaBase<Lighting> {
 private:
-    Lighting() : TerrariaBase("Terraria", "Lighting") {
+    Lighting() : TerrariaBase(oxorany("Terraria"), oxorany("Lighting")) {
 
-        AddLight_m = _class.GetMethod("AddLight", {"position", "rgb"});
+        AddLight_m = _class.GetMethod(oxorany("AddLight"), {oxorany("position"), oxorany("rgb")});
     }
     friend class TerrariaBase<Lighting>;
 

@@ -29,7 +29,7 @@
 
 class Projectile : public TerrariaBase<Projectile> {
 private:
-    Projectile() : TerrariaBase("Terraria", "Projectile") {
+    Projectile() : TerrariaBase(oxorany("Terraria"), oxorany("Projectile")) {
         #define X(type, name) INIT_FIELD(name)
                 INSTANCE_PROJECTILE_FIELD_LIST
         #undef X
@@ -41,7 +41,7 @@ private:
         #define T(returnType, name) INIT_METHOD(name)
                 STATIC_PROJECTILE_METHOD_LIST
         #undef T
-        NewProjectile_m = _class.GetMethod("NewProjectile", {"spawnSource", "position", "velocity", "Type", "Damage", "KnockBack", "Owner", "ai0", "ai1", "ai2", "modifer"});
+        NewProjectile_m = _class.GetMethod(oxorany("NewProjectile"), {oxorany("spawnSource"), oxorany("position"), oxorany("velocity"), oxorany("Type"), oxorany("Damage"), oxorany("KnockBack"), oxorany("Owner"), oxorany("ai0"), oxorany("ai1"), oxorany("ai2"), oxorany("modifer")});
     }
     friend class TerrariaBase<Projectile>;
 
