@@ -6,6 +6,7 @@
     X(int, whoAmI)           \
     X(BNM::Structures::Unity::Vector2, position) \
     X(BNM::Structures::Unity::Vector2, velocity) \
+    X(BNM::Structures::Unity::Vector2,oldPosition)                               \
     X(int, width)            \
     X(int, height)
 

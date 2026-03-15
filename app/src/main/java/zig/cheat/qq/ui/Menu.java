@@ -102,7 +102,7 @@ public class Menu {
     private int initialMenuX;
     private Handler visibilityHandler;
     private Runnable visibilityRunnable;
-
+    private Dialog disclaimerDialog;
     private Runnable blinkRunnable;
 
     private void initBlinkRunnable() {
@@ -149,6 +149,94 @@ public class Menu {
         } finally {
             visibilityHandler.postDelayed(visibilityRunnable, 300);
         }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void showDisclaimerDialog() {
+        // 确保 context 是 Activity 且未销毁
+        if (!(context instanceof Activity)) return;
+        Activity activity = (Activity) context;
+        if (activity.isFinishing() || activity.isDestroyed()) return;
+
+        // 如果已有弹窗显示，先关闭
+        if (disclaimerDialog != null && disclaimerDialog.isShowing()) {
+            disclaimerDialog.dismiss();
+        }
+
+        disclaimerDialog = new Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar);
+        disclaimerDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        disclaimerDialog.setCancelable(true);
+        disclaimerDialog.setCanceledOnTouchOutside(true); // 允许点击外部关闭，也可设为 false
+
+        float d = activity.getResources().getDisplayMetrics().density;
+        int dialogWidth = (int) (activity.getResources().getDisplayMetrics().widthPixels * 0.6); // 宽度为屏幕的 85%
+
+        // 创建根布局
+        LinearLayout root = new LinearLayout(activity);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding((int)(16*d), (int)(16*d), (int)(16*d), (int)(16*d));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Menu.COLOR_WINDOW_BG);
+        bg.setCornerRadius(12*d);
+        bg.setStroke((int)(1*d), Menu.COLOR_BORDER);
+        root.setBackground(bg);
+
+        // 标题
+        TextView title = new TextView(activity);
+        title.setText("免责声明");
+        title.setTextColor(Menu.COLOR_TEXT_PRIMARY);
+        title.setTextSize(16);
+        title.setTypeface(null, Typeface.BOLD);
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, 0, 0, (int)(8*d));
+        root.addView(title);
+
+        // 分割线
+        View divider = new View(activity);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, (int)(1*d)));
+        divider.setBackgroundColor(Menu.COLOR_DIVIDER);
+        root.addView(divider);
+
+        // 内容文本（免责声明）
+        TextView content = new TextView(activity);
+        content.setText("TerrariaModify是由少司命开发完全免费的" +
+                "\n获取渠道:985282301" +
+                "\n如果你是从其他渠道购买所得，那么恭喜你被骗了。");
+        content.setTextColor(Menu.COLOR_TEXT_SECONDARY);
+        content.setTextSize(18);
+        content.setGravity(Gravity.CENTER);
+        content.setPadding(0, (int)(16*d), 0, (int)(16*d));
+        content.setLineSpacing(4*d, 1.2f);
+        root.addView(content);
+
+        // 关闭按钮
+        Button closeBtn = new Button(activity);
+        closeBtn.setText("Accept & Close");
+        closeBtn.setTextColor(Color.WHITE);
+        closeBtn.setTextSize(12);
+        closeBtn.setAllCaps(false);
+        closeBtn.setTypeface(null, Typeface.BOLD);
+
+        GradientDrawable btnBg = new GradientDrawable();
+        btnBg.setColor(Menu.COLOR_ACCENT_BLUE);
+        btnBg.setCornerRadius(8*d);
+        closeBtn.setBackground(btnBg);
+        closeBtn.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, (int)(44*d)));
+        closeBtn.setOnClickListener(v -> disclaimerDialog.dismiss());
+        root.addView(closeBtn);
+        disclaimerDialog.setContentView(root);
+
+        // 设置窗口参数
+        Window window = disclaimerDialog.getWindow();
+        if (window != null) {
+            window.setLayout(dialogWidth, WindowManager.LayoutParams.WRAP_CONTENT);
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        disclaimerDialog.show();
     }
 
     public static void setHighRefreshRate(Activity activity) {
@@ -308,6 +396,7 @@ public class Menu {
 
         blinkHandler.post(blinkRunnable);
         visibilityHandler.post(visibilityRunnable);  // 仍保留，用于后续动态控制
+        showDisclaimerDialog();
     }
 
     private void createGestureHandle(float d, DisplayMetrics m) {

@@ -17,7 +17,13 @@
     X(int, itemTime)    \
     X(float, luck)                 \
     X(int, itemAnimation)          \
-    X(bool, releaseUseItem)
+    X(bool, releaseUseItem)        \
+    X(bool, controlLeft)           \
+    X(bool, controlRight)           \
+    X(bool, controlUp)           \
+    X(bool, controlDown)           \
+    X(float, gravity)              \
+    X(float, maxFallSpeed)
 
 #define INSTANCE_PLAYER_PROPERTY_LIST \
     Y(int, tileRangeX)       \
@@ -35,7 +41,11 @@
     Z(void, ItemCheck_UseMiningTools_ActuallyUseMiningTool) \
     Z(void, AddBuff)                \
     Z(BNM::UnityEngine::Object*, GetProjectileSource_Item)  \
-    Z(void, ItemCheck_StartActualUse)
+    Z(void, ItemCheck_StartActualUse)     \
+    Z(void, SlopeDownMovement)      \
+    Z(void, TileCollision)          \
+    Z(void, DryCollision)           \
+    Z(void, Update)
 
 class Player : public TerrariaBase<Player> {
 private:
@@ -57,8 +67,6 @@ private:
     BNM::Class SelectedItemState_cls;
 
 public:
-    BNM::Method<void> Update_m;
-    BNM::Method<void> Select_m;
     #define X(type, name) DECLARE_FIELD(type, name)
         INSTANCE_PLAYER_FIELD_LIST
     #undef X

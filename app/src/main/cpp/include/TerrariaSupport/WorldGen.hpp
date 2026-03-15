@@ -2,6 +2,7 @@
 
 #include "TerrariaBase.hpp"
 #include "Main.hpp"
+#include "NetMessage.hpp"
 
 #define STATIC_WORLDGEN_FIELD \
     X(bool, spawnMeteor)      \
@@ -57,6 +58,7 @@ public:
 #undef U
 
     static void KillCoordinatesTile(int x, int y, int radius, bool killwall = false) {
+        auto netMode = Main::getnetModeSync();
         auto maxTilesX = Main::getmaxTilesXSync();
         auto maxTilesY = Main::getmaxTilesYSync();
         for (int i = x - radius; i <= x + radius; i++) {
@@ -64,7 +66,25 @@ public:
                 if (i >= 0 && i < maxTilesX && j >= 0 && j < maxTilesY) {
                     if(InWorld_SyncCall(i , j, 0)){
                         KillTile_SyncCall(i, j, false, false, false);
-                        if(killwall) KillWall_SyncCall(i ,j , false);
+                        if(netMode == 1){
+                            NetMessage::SendDataSync(PacketData{
+                                    .msgType = 17,
+                                    .number = 0,
+                                    .number2 = (float)i,
+                                    .number3 = (float)j
+                            });
+                        }
+                        if(killwall) {
+                            KillWall_SyncCall(i ,j , false);
+                            if(netMode){
+                                NetMessage::SendDataSync(PacketData{
+                                        .msgType = 17,
+                                        .number = 2,
+                                        .number2 = (float)i,
+                                        .number3 = (float)j
+                                });
+                            }
+                        }
                     }
                 }
             }

@@ -19,6 +19,7 @@
 #include "TerrariaSupport/SelectedItemState.hpp"
 #include "TerrariaSupport/SpriteBatch.hpp"
 #include "TerrariaSupport/Spawner.hpp"
+#include "TerrariaSupport/TileDrawing.hpp"
 
 ElfScanner g_il2cppElf;
 
@@ -63,20 +64,28 @@ MenuOption buildMenu() {
                             .label = oxorany("自动攻击"),
                             .id = 104,
                     },
+                    CheckItem{
+                        .label = oxorany("地图高亮"),
+                        .id = 105
+                    },
+                    CheckItem{
+                        .label = oxorany("幽灵模式"),
+                        .id = 109
+                    },
                     TitleItem{
                         .label = oxorany("TILE")
                     },
                     CheckItem{
                             .label = oxorany("范围挖掘"),
-                            .id = 105,
+                            .id = 106,
                     },
                     CheckItem{
                             .label = oxorany("破坏墙体"),
-                            .id = 106,
+                            .id = 107,
                     },
                     SliderItem{
                         .label = oxorany("破坏半径"),
-                        .id = 107,
+                        .id = 108,
                         .min = 1,
                         .max = 100,
                         .defalutValue = 40
@@ -301,7 +310,7 @@ std::string GetStringUTF(JNIEnv* env, jstring jst) {
 }
 
 void OnLoaded() {
-    BNM::BasicHook(Main::Instance().Update_m, TerrariaMainUpdate,old_PlayerUpdate);
+    BNM::BasicHook(Main::Instance().Update_m, TerrariaMainUpdate,old_MainUpdate);
     BNM::BasicHook(Main::Instance().UpdateWorldPreparationState_m, UpdateWorldPreparationState_HOOK,old_UpdateWorldPreparationState_m);
     BNM::BasicHook(Player::Instance().ItemCheckWrapped_m, PlayerCheckItemHook,old_PlayerCheckItem);
     BNM::BasicHook(Player::Instance().ResetEffects_m, PlayerResetEffectsHook,old_PlayerResetEffects);
@@ -314,7 +323,12 @@ void OnLoaded() {
     BNM::BasicHook(SelectedItemState::Instance().Select_m, SelectedItemStateSelect_HOOK, old_SelectedItemStateSelect);
     BNM::BasicHook(SelectedItemState::Instance().Update_m, SelectedItemStateUpdate_HOOK, old_SelectedItemStateUpdate);
     BNM::BasicHook(Player::Instance().ItemCheck_StartActualUse_m, ItemCheck_StartActualUseHOOK, old_ItemCheck_StartActualUse);
-    BNM::BasicHook(SpriteBatch::Instance().Draw_Fast_VertexColors_m, DrawHOOK, old_Draw);
+    BNM::BasicHook(TileDrawing::Instance().DrawSingleTile_Flames_m, TileDrawHOOK, old_TileDraw);
+    BNM::BasicHook(Main::Instance().DrawBlack_m, DrawBlackHOOK, old_DrawBlack);
+    BNM::BasicHook(Player::Instance().Update_m, PlayerUpdateHook, old_PlayerUpdate);
+    BNM::BasicHook(Player::Instance().TileCollision_m, TileCollisionHOOK, old_TileCollision);
+    BNM::BasicHook(Player::Instance().SlopeDownMovement_m, SlopeDownMovementHOOK, old_SlopeDownMovement);
+    //BNM::BasicHook(Player::Instance().DryCollision_m, DryCollisionHOOK, old_DryCollision);
 }
 
 extern "C"{
@@ -340,10 +354,11 @@ extern "C"{
             case 102: playerState.InfiniteReach = check; break;
             case 103: playerState.InfiniteMana = check; break;
             case 104: playerState.AutoAim = check; break;
-            case 105: playerState.KillTileRect = check; break;
-            case 106: playerState.KillWallRect   = check; break;
-            case 107: playerState.DestructionRange = value; break;
-            case 108: Main::UnLockAchievements(); break;
+            case 105: FullLigth(check); break;
+            case 106: playerState.KillTileRect = check; break;
+            case 107: playerState.KillWallRect   = check; break;
+            case 108: playerState.DestructionRange = value; break;
+            case 109: playerState.ghost = check; break;
             case 200: if(check) Main::LigthMap(); break;
             case 201: worldState.MapTeleport = check; break;
             case 202: ProcessTimeStringRobust(GetStringUTF(env, value3)); break;
@@ -378,6 +393,7 @@ extern "C"{
             Item::GetName(itemState.type),
             itemState.type,
             {
+                {"前缀", itemState.prefix},
                 {"堆叠", itemState.stack},
                 {"伤害", itemState.damage},
                 {"大小", itemState.scale},
@@ -406,6 +422,16 @@ extern "C"{
 
         bool anyChanged = false;
         auto& itemState = UIState::getPanelState<UIState::ItemState>();
+
+        if (weapon.attributes.contains("前缀")) {
+            int newValue = weapon.attributes["前缀"].get<int>();
+            if (itemState.prefix != newValue) {
+                itemState.prefix = newValue;
+                Item::setprefix(itemState.selectItem, (std::byte)newValue);
+                anyChanged = true;
+            }
+        }
+
         if (weapon.attributes.contains("堆叠")) {
             int newValue = weapon.attributes["堆叠"].get<int>();
             if (itemState.stack != newValue) {

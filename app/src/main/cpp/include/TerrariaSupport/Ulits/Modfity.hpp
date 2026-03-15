@@ -19,10 +19,12 @@
 #include "TerrariaSupport/Lighting.hpp"
 #include "TerrariaSupport/Sandstorm.hpp"
 #include "TerrariaSupport/LanternNight.hpp"
+#include "TerrariaSupport/Lighting.hpp"
+#include "TerrariaSupport/TileDrawing.hpp"
 
 
 // 函数指针定义
-inline void (*old_PlayerUpdate)(void*, BNM::UnityEngine::Object*);
+inline void (*old_MainUpdate)(void*, BNM::UnityEngine::Object*);
 inline void (*old_TriggerPing)(BNM::Structures::Unity::Vector2);
 inline void (*old_PlayerResetEffects)(BNM::UnityEngine::Object*);
 inline void (*old_PlayerCheckItem)(BNM::UnityEngine::Object*, int);
@@ -35,19 +37,80 @@ inline void (*old_TrySendingItemArray_m)(int plr, void*, int slotStart);
 inline void (*old_SelectedItemStateUpdate)(void* instance);
 inline void (*old_SelectedItemStateSelect)(void* instance, int item);
 inline void (*old_ItemCheck_StartActualUse)(BNM::UnityEngine::Object*, BNM::UnityEngine::Object*);
-//inline void (*old_Draw)(BNM::UnityEngine::Object* instance, void* texture, BNM::Structures::Unity::Vector2 position, void* sourceRectangle, Color color, float rotation, BNM::Structures::Unity::Vector2 origin, float scale, void* effects, float layerDepth);
-//
-//inline void DrawHOOK(BNM::UnityEngine::Object* instance, void* texture, BNM::Structures::Unity::Vector2 position, void* sourceRectangle, Color color, float rotation, BNM::Structures::Unity::Vector2 origin, float scale, void* effects, float layerDepth){
-//    LOGI("高亮");
-//    color = Color(BNM::Structures::Unity::Vector3(255, 255, 255));
-//    old_Draw(instance, texture, position, sourceRectangle, color, rotation, origin, scale, effects, layerDepth);
-//}
+inline void (*old_DrawBlack)(BNM::UnityEngine::Object* instance, bool force);
+inline void (*old_TileDraw)(BNM::UnityEngine::Object* instance,  BNM::Structures::Unity::Vector2 screenPosition, BNM::Structures::Unity::Vector2 offset, int tileX, int TileY, void* tileDraw);
+inline void (*old_PlayerUpdate)(BNM::UnityEngine::Object* player, int i);
+inline BNM::Structures::Unity::Vector2 (*old_TileCollision)(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 position, BNM::Structures::Unity::Vector2 velocity, bool FallThrough, bool IgnorePlats);
+inline void (*old_SlopeDownMovement)(void* player);
+inline void (*old_DryCollision)(void* player, BNM::Structures::Unity::Vector2 velocity, bool canFallThrough, bool ignorePlats);
 
-inline void (*old_Draw)(BNM::UnityEngine::Object* instance, void* texture, BNM::Structures::Unity::Vector2* position, void* sourceRectangle, VertexColors* color, void* effects);
+inline void DryCollisionHOOK(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 velocity, bool canFallThrough, bool ignorePlats){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.ghost){
+        velocity.y = 0;
+        return;
+    }
+    old_DryCollision(player, velocity, canFallThrough, ignorePlats);
+}
 
-inline void DrawHOOK(BNM::UnityEngine::Object* instance, void* texture, BNM::Structures::Unity::Vector2* position, void* sourceRectangle, VertexColors* color, void* effects){
-    auto coolr = VertexColors(Color(BNM::Structures::Unity::Vector3(255, 255, 255)));
-    old_Draw(instance, texture, position, sourceRectangle, &coolr,  effects);
+inline void SlopeDownMovementHOOK(void* player){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(!state.ghost){
+        old_SlopeDownMovement(player);
+    }
+}
+
+inline BNM::Structures::Unity::Vector2 TileCollisionHOOK(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 position, BNM::Structures::Unity::Vector2 velocity, bool fallThrough, bool ignorePlats){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.ghost){
+        return velocity;
+    }
+    return old_TileCollision(player, position, velocity, fallThrough, ignorePlats);
+}
+
+inline void Ghost(BNM::UnityEngine::Object* player){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.ghost){
+        auto pos = Entity::getpositionSync(player);
+        auto move = BNM::Structures::Unity::Vector2(0, 0);
+        Entity::setoldPositionSync(player, pos);
+        float currentSpeed = 10;
+        if(Player::getcontrolLeftSync(player)) move.x -= 1;
+        if(Player::getcontrolRightSync(player)) move.x += 1;
+        if(Player::getcontrolUpSync(player)) move.y -= 1;
+        if(Player::getcontrolDownSync(player)) move.y += 1;
+        pos += move *currentSpeed;
+        Entity::setpositionSync(player, pos);
+        Entity::setvelocitySync(player, move * currentSpeed);
+    }
+}
+
+inline void PlayerUpdateHook(BNM::UnityEngine::Object* player, int i){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.ghost){
+        Player::setmaxFallSpeedSync(player, 0);
+        Player::setgravitySync(player, 0);
+        Ghost(player);
+    }
+    old_PlayerUpdate(player, i);
+}
+
+
+
+inline void TileDrawHOOK(BNM::UnityEngine::Object* instance,  BNM::Structures::Unity::Vector2 screenPosition, BNM::Structures::Unity::Vector2 offset, int tileX, int tileY, void* tileDraw){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.FullBright){
+        int l = 1;
+        Lighting::AddLight_SyncCall(tileX, tileY, l, l, l);
+    }
+    old_TileDraw(instance,screenPosition, offset, tileX, tileY, tileDraw);
+}
+
+inline void DrawBlackHOOK(BNM::UnityEngine::Object* instance, bool force){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(!state.FullBright){
+        old_DrawBlack(instance, force);
+    }
 }
 
 inline void ItemCheck_UseMiningTools_ActuallyUseMiningToolHOOK(BNM::UnityEngine::Object* instance, void* item, bool* canHitWalls, int x, int y){
@@ -270,11 +333,13 @@ inline void AutoFish_Checke(){
     }
 }
 
+
 // 函数定义
 inline void TerrariaMainUpdate(void* instance, BNM::UnityEngine::Object* deltaTime){
     EventUpdateHandler::GetInstance().Update();
     AutoFish_Checke();
-    old_PlayerUpdate(instance, deltaTime);
+    //Ghost();
+    old_MainUpdate(instance, deltaTime);
 }
 
 
@@ -355,6 +420,14 @@ inline void PlayerCheckItemHook(BNM::UnityEngine::Object* player, int i){
         }
     }
     old_PlayerCheckItem(player, i);
+}
+
+inline void FullLigth(bool check){
+    auto& playerState = UIState::getPanelState<UIState::PlayerState>();
+    if(check){
+        Lighting::setMode(2);
+    }
+    playerState.FullBright = check;
 }
 
 //生成npc
@@ -463,6 +536,8 @@ inline void StopInvasion(){
     Main::setwindSpeedCurrent(0);
     Main::setwindSpeedTarget(0);
     Main::StopSlimeRain_Call(true);
+    Main::setinvasionSize(0);
+    Main::setinvasionSizeStart(0);
     if(LanternNight::getLanternsUp()) LanternNight::ToggleManualLanterns_Call();
 }
 

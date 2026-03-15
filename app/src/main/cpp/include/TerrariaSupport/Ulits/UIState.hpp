@@ -23,6 +23,7 @@ namespace UIState {
     };
 
     struct PlayerState{
+        bool FullBright = false;
         bool InfiniteMinions = false;
         bool InfiniteMana = false;
         bool InfiniteReach = false;
@@ -30,8 +31,10 @@ namespace UIState {
         bool KillWallRect = false;
         bool AutoAim = false;
         int DestructionRange = 40;
+        bool ghost = false;
         bool setLuck = false;
         float gameZoomTarget = 1;
+        float Brightness = 1;
     };
 
     struct FishUIState{

@@ -25,7 +25,8 @@
     S(bool, pumpkinMoon)       \
     S(bool, snowMoon)          \
     S(float, windSpeedCurrent) \
-    S(float, windSpeedTarget)
+    S(float, windSpeedTarget)  \
+    S(bool, drawToScreen)
 
 #define MAIN_STATIC_PROPERTY_LIST \
     P(BNM::UnityEngine::Object*, LocalPlayer) \
@@ -45,7 +46,6 @@
     M(void, Update) \
     M(void, TriggerPing) \
     M(void, DoDraw) \
-    M(void, DrawBlack) \
     M(void, UpdateWorldPreparationState) \
     M(void, StartClientGameplay)    \
     M(void, StartInvasion)      \
@@ -53,6 +53,9 @@
     M(void, StopRain)           \
     M(void, StartSlimeRain)     \
     M(void, StopSlimeRain)
+
+#define MAIN_INSTANCE_METHOD \
+    I(void, DrawBlack)
 
 class Main : public TerrariaBase<Main> {
 private:
@@ -68,6 +71,10 @@ private:
 #define M(returnType, name) INIT_METHOD(name)
         MAIN_STATIC_METHOD_LIST
 #undef M
+
+#define I(returnType, name) INIT_METHOD(name)
+        MAIN_INSTANCE_METHOD
+#undef I
     }
     friend class TerrariaBase<Main>;
 
@@ -84,6 +91,10 @@ public:
 #define M(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
     MAIN_STATIC_METHOD_LIST
 #undef M
+
+#define I(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+    MAIN_INSTANCE_METHOD
+#undef I
 
 #define S(type, name) DEFINE_STATIC_FIELD_ACCESSORS(name, type, name##_f)
     MAIN_STATIC_FIELD_LIST
