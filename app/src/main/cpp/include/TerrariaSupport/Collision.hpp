@@ -1,0 +1,8 @@
+//
+// Created by admin on 2026/3/20.
+//
+
+#ifndef TEMPLATE_ZIG_COLLISION_HPP
+#define TEMPLATE_ZIG_COLLISION_HPP
+
+#endif //TEMPLATE_ZIG_COLLISION_HPP
