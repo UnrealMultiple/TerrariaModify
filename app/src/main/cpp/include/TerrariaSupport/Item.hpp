@@ -28,7 +28,8 @@
     Y(BNM::Structures::Mono::String*, Name)
 
 #define INSTANCE_ITEM_METHODS(Z) \
-    Z(void, netDefaults)
+    Z(void, netDefaults)         \
+    Z(void, SetDefaults)
 
 #define STATIC_ITEM_METHODS(T) \
     T(int, NewItem)

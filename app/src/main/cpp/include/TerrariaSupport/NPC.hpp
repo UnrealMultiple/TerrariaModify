@@ -5,6 +5,9 @@
 #include "Entity.hpp"
 #include "Main.hpp"
 #include "NPCSpawnParams.hpp"
+#include "NetMessage.hpp"
+#include "UnifiedRandom.hpp"
+#include "TileData.hpp"
 
 #define INSTANCE_NPC_FIELD_LIST \
     X(int, type)           \
@@ -12,7 +15,9 @@
     X(bool, friendly)      \
     X(bool, immortal)           \
     X(bool, townNPC)      \
-    X(bool, dontTakeDamage)
+    X(bool, dontTakeDamage)     \
+    X(int, life)                \
+    X(int, defense)
 
 #define STATIC_NPC_STATIC_FIELD \
     Y(float, waveKills)         \
@@ -20,12 +25,15 @@
 
 #define INSTANCE_NPC_METHOD_LIST \
     Z(void, SetDefaults)         \
-    Z(void, StrikeNPC)
+    Z(void, StrikeNPC)           \
+    Z(void, StrikeNPCNoInteraction)
 
 #define STATIC_NPC_METHOD_LIST \
     T(void, SpawnBoss)   \
     T(int, NewNPC)             \
-    T(int, SpawnWOF)
+    T(int, SpawnWOF)           \
+    T(BNM::UnityEngine::Object*, SpawnNPC)                           \
+    T(BNM::UnityEngine::Object*, GetBossSpawnSource)
 
 class NPC : public TerrariaBase<NPC> {
 private:
@@ -81,17 +89,6 @@ public:
         STATIC_NPC_METHOD_LIST
     #undef T
 
-//    static void SpawnNPC(int type){
-//        auto player = Main::getLocalPlayer();
-//        auto npc = Instance()._class.CreateNewObjectParameters();
-//        auto spawnParams = NPCSpawnParams::Instance()._class.CreateNewObjectParameters();
-//        SetDefaults_Call((BNM::UnityEngine::Object*)npc, type, spawnParams);
-//        auto current_type = gettype((BNM::UnityEngine::Object*)npc);
-//        auto source = Projectile::GetNoneSource_Call();
-//        auto pos = Entity::getposition(player);
-//        auto index = NewNPC_Call(source, pos.x, pos.y, current_type, 0, 0, 0 ,0 ,0 ,255);
-//    }
-
     static int SetDefaults(int type){
         auto feat = EventUpdateHandler::GetInstance().AddEventWithResult([type] () -> int {
                 auto npc_Instance = Instance()._class.CreateNewObjectParameters();
@@ -102,17 +99,49 @@ public:
         return feat.get();
     }
 
+    static void GetRandomClearTileWithInRangeSync(int startTileX, int startTileY, int tileXRange, int tileYRange,
+                                       int& tileX, int& tileY){
+        int j = 0;
+        do
+        {
+            if (j == 100)
+            {
+                tileX = startTileX;
+                tileY = startTileY;
+                break;
+            }
+            tileX = startTileX + UnifiedRandom::Next(tileXRange * -1, tileXRange);
+            tileY = startTileY + UnifiedRandom::Next(tileYRange * -1, tileYRange);
+            j++;
+        } while (TileSolidSync(tileX, tileX));
+    }
+
+    static bool TilePlacementValid(int tileX, int tileY){
+        auto maxTileX = Main::getmaxTilesY();
+        auto maxTileY = Main::getmaxTilesY();
+        return tileX >= 0 && tileX < maxTileX && tileY >= 0 && tileY < maxTileY;
+    }
+
+    static bool TileSolidSync(int tileX, int tileY){
+        auto tileData = Main::gettileSync();
+        auto tile = TileData::get_Item_SyncCall(tileData, tileX, tileY);
+        auto tileSolid = Main::gettileSolidSync()->ToVector();
+        return tile.active() && tile.inActive() && tile.slope() == 0 && tile.halfBrick() && tileSolid[tile.type] && tile.type != 379 && TilePlacementValid(tileX, tileY);
+    }
+
     static void SpawnNPC(int x, int y, int type){
         auto feat = EventUpdateHandler::GetInstance().AddEventWithResult([x, y, type]() -> void {
-            auto t = SetDefaults(type);
-            auto source = Projectile::GetNoneSource_SyncCall();
-            auto index = Instance().NewNPC_m(source, x, y, t, 0, 0, 0 ,0 ,0 ,255);
+            int newX, newY;
+            GetRandomClearTileWithInRangeSync(x / 16, y / 16, 50, 20, newX, newY);
+            auto EntitySource_DebugCommand =  BNM::Class("Terraria.DataStructures","EntitySource_DebugCommand");
+            auto source = EntitySource_DebugCommand.CreateNewObjectParameters();
+            NPC::NewNPC_SyncCall(source, newX * 16, newY * 16, type, 0, 0.0f, 0.0f ,0.0f ,0.0f, 255);
         });
     }
 
     static void SpawnBoss(int x, int y, int type) {
-        auto t = SetDefaults(type);
-        SpawnBoss_Call(x, y, t, Main::getmyPlayer(), 0, 0, 0, 0);
+        auto playerIndex = Main::getmyPlayer();
+        SpawnBoss_Call(x, y, type, playerIndex, 0, 0, 0, 0);
     }
 
     static void SpawnWOF(BNM::Structures::Unity::Vector2 pos){
@@ -121,29 +150,72 @@ public:
         });
     }
 
-    static void killHostileNpcSync(){
-        auto npcList = Main::getnpcSync()->ToVector();
-        for (auto npc : npcList) {
-            if(npc && getactiveSync(npc) && !gettownNPCSync(npc)){
-                StrikeNPC_SyncCall(npc, INT32_MAX, 0, 0, false, false, false, -1);
-            }
-        }
-    }
-    static void KillHostileNpc(){
-        EventUpdateHandler::GetInstance().AddEventR(killHostileNpcSync);
-    }
-
-
-    static void KillAllSync(){
-        auto npcList = Main::getnpcSync()->ToVector();
-        for (auto npc : npcList) {
-            if(npc && getactiveSync(npc)){
-                StrikeNPC_SyncCall(npc, INT32_MAX, 0, 0, false, false, false, -1);
+    static void ButcherAllHostileNPCsSync(int damage = 1000, int hitCount = -1){
+        auto npcs = Main::getnpcSync()->ToVector();
+        for (int i = 0; i < npcs.size(); i++){
+            auto npc = npcs[i];
+            if (NPC::getactiveSync(npc) && !NPC::getfriendlySync(npc) && NPC::gettypeSync(npc) != 388){
+                ButcherNPCBypassTShockSync(npc, hitCount);
+                ButcherNPCSync(npc, damage, hitCount);
             }
         }
     }
 
-    static void KillAll(){
-        EventUpdateHandler::GetInstance().AddEventR(KillAllSync);
+    static void ButcherNPCSync(BNM::UnityEngine::Object* npc, int damage = 1000, int hitCount = -1){
+        int trueHitCount = hitCount;
+        if (hitCount == -1){
+            trueHitCount = (int)ceil((float)(getlifeSync(npc) + (int)ceil(getdefenseSync(npc) / 2.0f)) / damage);
+        }
+        for (int j = 0; j < trueHitCount; j++){
+            StrikeNPCNoInteraction_SyncCall(npc, damage, 0.0f, 0, true, false, false);
+            NetMessage::SendDataSync(PacketData{
+                    .msgType = 28,
+                    .number = Entity::getwhoAmISync(npc),
+                    .number2 = (float)damage
+            });
+        }
+    }
+
+    static void ButcherNPCBypassTShockSync(BNM::UnityEngine::Object* npc, int hitCount = -1){
+        if (getimmortalSync(npc))
+            return;
+
+        if (hitCount < 0)
+            hitCount = (int)ceil((float) getlifeSync(npc) / SHRT_MAX);
+        for (int i = 0; i < hitCount; i++){
+            NetMessage::SendDataSync(PacketData{
+                .msgType = 153,
+                .number = Entity::getwhoAmISync(npc),
+                .number2 = SHRT_MAX
+            });
+        }
+    }
+
+    static void ButcherAllNPCsSync(int damage = 1000, int hitCount = -1){
+        ButcherAllHostileNPCsSync(damage, hitCount);
+        ButcherAllFriendlyNPCsSync(damage, hitCount);
+    }
+
+    static void ButcherAllFriendlyNPCsSync(int damage = 1000, int hitCount = -1){
+        auto npcs = Main::getnpcSync()->ToVector();
+        for (int i = 0; i < npcs.size(); i++){
+            auto npc = npcs[i];
+            if (getactiveSync(npc) && getfriendlySync(npc) && gettypeSync(npc) == 388){
+                ButcherNPCBypassTShockSync(npc, hitCount);
+                ButcherNPCSync(npc, damage, hitCount);
+            }
+        }
+    }
+
+    static void ButcherAllNPCs(int damage = 1000, int hitCount = -1){
+        EventUpdateHandler::GetInstance().AddEventR(ButcherAllNPCsSync, damage, hitCount);
+    }
+
+    static void ButcherAllFriendlyNPCs(int damage = 1000, int hitCount = -1){
+        EventUpdateHandler::GetInstance().AddEventR(ButcherAllFriendlyNPCsSync, damage, hitCount);
+    }
+
+    static void ButcherAllHostileNPCs(int damage = 1000, int hitCount = -1){
+        EventUpdateHandler::GetInstance().AddEventR(ButcherAllHostileNPCsSync, damage, hitCount);
     }
 };

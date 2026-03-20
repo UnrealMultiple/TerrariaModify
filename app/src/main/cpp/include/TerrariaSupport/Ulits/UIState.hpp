@@ -32,9 +32,13 @@ namespace UIState {
         bool AutoAim = false;
         int DestructionRange = 40;
         bool ghost = false;
-        bool setLuck = false;
-        float gameZoomTarget = 1;
-        float Brightness = 1;
+        int ghostSpeed = 25;
+        int ghostIndex = -1;
+        bool bestow = false;
+        bool AllowTeleport = false;
+        bool respawn = false;
+        bool interceptRespawnPack = false;
+        int respawnSecond = 15;
     };
 
     struct FishUIState{
@@ -84,13 +88,18 @@ namespace UIState {
     struct NPCState{
         int defaultSpawnRate = 600;
         int defaultMaxSpawns = 5;
+        int AutoButcherNPC = false;
         bool modifySpawn = false;
     };
 
-    struct WolldState{
+    struct WolldState {
         bool MapTeleport = false;
         Invasion WorldInvasion = Invasion::goblin;
-
+        std::vector<char> mapLoad;
+        std::atomic<int> loadedSections{0};
+        int totalSections = 0;
+        int sectionsX = 0;
+        int sectionsY = 0;
     };
 
     template<class T>

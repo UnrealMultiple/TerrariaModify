@@ -50,13 +50,11 @@ import zig.cheat.qq.ui.Utils;
 
 public class BulletGeneratorDialog {
 
-    // ========== 可调常量 ==========
     private static final int TITLE_BAR_PADDING_VERTICAL_DP = 2;
     private static final int CONTENT_VERTICAL_SPACING_DP = 8;
     private static final int ANIMATION_DURATION_MS = 200;
     private static final int CARD_MARGIN_BOTTOM_DP = 8;
     private static final int DIALOG_FIXED_HEIGHT_DP = 400;
-    // =============================
 
     private static final ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactory() {
         private final AtomicLong counter = new AtomicLong(0);
@@ -165,7 +163,7 @@ public class BulletGeneratorDialog {
         dialog.show();
     }
 
-    // ========== 统一按钮缩放动画 ==========
+    @SuppressLint("ClickableViewAccessibility")
     private void applyScaleAnimation(View button) {
         button.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
@@ -177,11 +175,10 @@ public class BulletGeneratorDialog {
                     v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
                     break;
             }
-            return false; // 不消耗事件，允许点击继续传递
+            return false;
         });
     }
 
-    // [Modified] 武器ID输入对话框 - 完全自定义，与BuffGeneratorDialog统一风格
     private void showAddWeaponDialog() {
         final float d = density;
         Dialog inputDialog = new Dialog(context, android.R.style.Theme_Translucent_NoTitleBar);
@@ -411,20 +408,19 @@ public class BulletGeneratorDialog {
         }
     }
 
-    // ========== 内部类：武器条目 ==========
     private class WeaponEntry {
         View rootView;
-        LinearLayout contentLayout;          // 武器内容（包含添加按钮和弹幕容器）
-        LinearLayout bulletsContainer;       // 存放所有弹幕卡片
+        LinearLayout contentLayout;
+        LinearLayout bulletsContainer;
         TextView titleView;
         TextView expandIcon;
         boolean expanded = false;
         boolean isAnimating = false;
 
-        String weaponId;                      // 武器ID（作为JSON键）
+        String weaponId;
         List<BulletEntry> bulletEntries = new ArrayList<>();
 
-        private final float d;                 // 保存密度值，用于创建子视图
+        private final float d;
 
         interface DeleteCallback {
             void onDelete(WeaponEntry entry);
@@ -909,6 +905,7 @@ public class BulletGeneratorDialog {
             }
         }
 
+        @SuppressLint("SetTextI18n")
         void updateTitle(int newIndex) {
             titleView.setText("弹幕 " + newIndex);
         }
@@ -945,8 +942,6 @@ public class BulletGeneratorDialog {
             return s.isEmpty() ? def : s;
         }
     }
-
-    // ========== UI 辅助方法 ==========
 
     private static LinearLayout createLabeledEditText(Context context, String label, float d,
                                                       java.util.function.Consumer<EditText> setter, int inputType, String defaultValue) {
@@ -1059,7 +1054,6 @@ public class BulletGeneratorDialog {
         btn.setBackground(bg);
         btn.setLayoutParams(new LinearLayout.LayoutParams(-1, -2));
         btn.setOnClickListener(v -> safeExecute(() -> listener.onClick(v)));
-        // [Modified] 添加缩放动画
         applyScaleAnimation(btn);
         return btn;
     }

@@ -33,4 +33,6 @@ namespace Tools {
 	const char *GetDeviceBrand(JNIEnv *env);
 	const char *GetDeviceUniqueIdentifier(JNIEnv *env, const char *uuid);
 	std::string CalcMD5(std::string s);
+    void showToast(const std::string& msg);
+    void InitJniHelper(JNIEnv* env);
 }

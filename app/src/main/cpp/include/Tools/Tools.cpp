@@ -17,6 +17,11 @@
 #include "obfuscate.h"
 #include "Tools.h"
 
+extern JavaVM* g_vm;
+static jclass g_JniClass = nullptr;
+static jobject g_ClassLoader = nullptr;
+static jmethodID g_FindClassMethod = nullptr;
+
 pid_t target_pid = -1;
 
 #define INRANGE(x, a, b)        (x >= a && x <= b)
@@ -285,4 +290,73 @@ std::string Tools::CalcMD5(std::string s) {
         result += tmp;
     }
     return result;
+}
+
+void Tools::showToast(const std::string& msg) {
+    if (!g_vm || !g_ClassLoader || !g_FindClassMethod) {
+        __android_log_print(ANDROID_LOG_WARN, "Tools", "JNI helper not initialized, toast ignored");
+        return;
+    }
+
+    JNIEnv* env = nullptr;
+    int attach = g_vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+    bool attached = false;
+
+    if (attach == JNI_EDETACHED) {
+        if (g_vm->AttachCurrentThread(&env, nullptr) != 0) return;
+        attached = true;
+    } else if (attach != JNI_OK) {
+        return;
+    }
+
+    // 使用 ClassLoader 加载目标类
+    jstring className = env->NewStringUTF("zig.cheat.qq.jni.Jni");
+    jclass cls = (jclass)env->CallObjectMethod(g_ClassLoader, g_FindClassMethod, className);
+    env->DeleteLocalRef(className);
+
+    if (cls) {
+        jmethodID mid = env->GetStaticMethodID(cls, "onToast", "(Ljava/lang/String;)V");
+        if (mid) {
+            jstring jmsg = env->NewStringUTF(msg.c_str());
+            if (jmsg) {
+                env->CallStaticVoidMethod(cls, mid, jmsg);
+                env->DeleteLocalRef(jmsg);
+            }
+        }
+        env->DeleteLocalRef(cls);
+    } else {
+        __android_log_print(ANDROID_LOG_ERROR, "Tools", "Failed to load class via ClassLoader");
+    }
+
+    if (attached) g_vm->DetachCurrentThread();
+}
+
+void Tools::InitJniHelper(JNIEnv* env) {
+    if (g_ClassLoader != nullptr) return; // 已初始化
+
+    // 获取应用类（这里用你的 Jni 类）
+    jclass localJniClass = env->FindClass("zig/cheat/qq/jni/Jni");
+    if (!localJniClass) {
+        __android_log_print(ANDROID_LOG_ERROR, "Tools", "Failed to find Jni class");
+        return;
+    }
+    g_JniClass = (jclass)env->NewGlobalRef(localJniClass);
+
+    // 获取 ClassLoader
+    jclass classClass = env->GetObjectClass(localJniClass);
+    jmethodID getClassLoaderMethod = env->GetMethodID(classClass, "getClassLoader", "()Ljava/lang/ClassLoader;");
+    jobject classLoader = env->CallObjectMethod(localJniClass, getClassLoaderMethod);
+    g_ClassLoader = env->NewGlobalRef(classLoader);
+
+    // 获取 ClassLoader.loadClass 方法
+    jclass classLoaderClass = env->GetObjectClass(classLoader);
+    g_FindClassMethod = env->GetMethodID(classLoaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+
+    // 清理局部引用
+    env->DeleteLocalRef(classLoaderClass);
+    env->DeleteLocalRef(classClass);
+    env->DeleteLocalRef(classLoader);
+    env->DeleteLocalRef(localJniClass);
+
+    __android_log_print(ANDROID_LOG_INFO, "Tools", "JNI helper initialized");
 }

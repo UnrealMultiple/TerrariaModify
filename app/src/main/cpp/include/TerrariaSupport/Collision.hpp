@@ -1,8 +1,31 @@
-//
-// Created by admin on 2026/3/20.
-//
 
-#ifndef TEMPLATE_ZIG_COLLISION_HPP
-#define TEMPLATE_ZIG_COLLISION_HPP
+#pragma once
 
-#endif //TEMPLATE_ZIG_COLLISION_HPP
+#include "TerrariaBase.hpp"
+
+
+#define STATIC_COLLISOION_METHOD_LIST \
+    T(void, StepDown)         \
+    T(void, StepUp)
+
+class Collision : public TerrariaBase<Collision> {
+private:
+    Collision() : TerrariaBase(oxorany("Terraria"), oxorany("Collision")) {
+
+#define T(returnType, name) INIT_METHOD(name)
+        STATIC_COLLISOION_METHOD_LIST
+#undef T
+    }
+    friend class TerrariaBase<Collision>;
+
+public:
+
+#define T(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+    STATIC_COLLISOION_METHOD_LIST
+#undef T
+
+
+#define T(returnType, name) DEFINE_STATIC_METHOD_WRAPPER(returnType, name)
+    STATIC_COLLISOION_METHOD_LIST
+#undef T
+};

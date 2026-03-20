@@ -23,6 +23,7 @@
     X(bool, controlUp)           \
     X(bool, controlDown)           \
     X(float, gravity)              \
+    X(bool, noFallDmg)              \
     X(float, maxFallSpeed)
 
 #define INSTANCE_PLAYER_PROPERTY_LIST \
@@ -45,7 +46,11 @@
     Z(void, SlopeDownMovement)      \
     Z(void, TileCollision)          \
     Z(void, DryCollision)           \
-    Z(void, Update)
+    Z(void, WetCollision)           \
+    Z(void, Update)                 \
+    Z(void, KillMe)                 \
+    Z(void, GetRespawnTime)         \
+    Z(void, SlopingCollision)
 
 class Player : public TerrariaBase<Player> {
 private:
@@ -64,7 +69,6 @@ private:
 
     }
     friend class TerrariaBase<Player>;
-    BNM::Class SelectedItemState_cls;
 
 public:
     #define X(type, name) DECLARE_FIELD(type, name)

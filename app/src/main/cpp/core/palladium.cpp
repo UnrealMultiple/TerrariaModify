@@ -20,8 +20,11 @@
 #include "TerrariaSupport/SpriteBatch.hpp"
 #include "TerrariaSupport/Spawner.hpp"
 #include "TerrariaSupport/TileDrawing.hpp"
+#include "TerrariaSupport/ChatHelper.hpp"
+#include "Tools/Tools.h"
 
 ElfScanner g_il2cppElf;
+JavaVM* g_vm = nullptr;
 
 void main_thread() {
     sleep(2);
@@ -41,55 +44,95 @@ MenuOption buildMenu() {
                 .title = oxorany("玩家功能"),
                 .icon = "icons/func1.png",
                 .items = {
-                    TitleItem{
-                            .label = oxorany("Player")
-                    },
-                    CheckItem{
-                            .label = oxorany("上帝模式"),
-                            .id = 100
-                    },
-                    CheckItem{
-                            .label = oxorany("无限召唤"),
-                            .id = 101
-                    },
-                    CheckItem{
-                            .label = oxorany("无限范围"),
-                            .id = 102,
-                    },
-                    CheckItem{
-                            .label = oxorany("无限魔力"),
-                            .id = 103,
-                    },
-                    CheckItem{
-                            .label = oxorany("自动攻击"),
-                            .id = 104,
-                    },
-                    CheckItem{
-                        .label = oxorany("地图高亮"),
-                        .id = 105
-                    },
-                    CheckItem{
-                        .label = oxorany("幽灵模式"),
-                        .id = 109
-                    },
-                    TitleItem{
-                        .label = oxorany("TILE")
-                    },
-                    CheckItem{
-                            .label = oxorany("范围挖掘"),
-                            .id = 106,
-                    },
-                    CheckItem{
-                            .label = oxorany("破坏墙体"),
-                            .id = 107,
-                    },
-                    SliderItem{
-                        .label = oxorany("破坏半径"),
-                        .id = 108,
-                        .min = 1,
-                        .max = 100,
-                        .defalutValue = 40
-                    }
+                        TitleItem{
+                                .label = oxorany("Player")
+                        },
+                        CheckItem{
+                                .label = oxorany("上帝模式"),
+                                .id = 100
+                        },
+                        CheckItem{
+                                .label = oxorany("无限召唤"),
+                                .id = 101
+                        },
+                        CheckItem{
+                                .label = oxorany("无限范围"),
+                                .id = 102,
+                        },
+                        CheckItem{
+                                .label = oxorany("无限魔力"),
+                                .id = 103,
+                        },
+                        CheckItem{
+                                .label = oxorany("自动攻击"),
+                                .id = 104,
+                        },
+                        CheckItem{
+                                .label = oxorany("司命赐我"),
+                                .id = 105,
+                        },
+                        CheckItem{
+                                .label = oxorany("禁止被传送"),
+                                .id = 106,
+                        },
+                        CheckItem{
+                                .label = oxorany("解锁全成就"),
+                                .id = 107
+                        },
+                        CheckItem{
+                                .label = oxorany("地图高亮"),
+                                .id = 108
+                        },
+                        TitleItem{
+                                .label = oxorany("GHOST")
+                        },
+                        CheckItem{
+                                .label = oxorany("幽灵模式"),
+                                .id = 109
+                        },
+                        SliderItem{
+                                .label = oxorany("移动速度"),
+                                .id = 110,
+                                .min = 1,
+                                .max = 100,
+                                .defalutValue = 25
+                        },
+                        TitleItem{
+                                .label = oxorany("TILE")
+                        },
+                        CheckItem{
+                                .label = oxorany("范围挖掘"),
+                                .id = 111,
+                        },
+                        CheckItem{
+                                .label = oxorany("破坏墙体"),
+                                .id = 112,
+                        },
+                        SliderItem{
+                                .label = oxorany("破坏半径"),
+                                .id = 113,
+                                .min = 1,
+                                .max = 100,
+                                .defalutValue = 40
+                        },
+                        TitleItem{
+                                .label = oxorany("SPAWN")
+                        },
+                        CheckItem{
+                                .label = oxorany("启用重生"),
+                                .id = 114,
+                        },
+                        CheckItem{
+                                .label = oxorany("拦截重生包"),
+                                .id = 115,
+                        },
+                        SliderItem{
+                                .label = oxorany("重生时间"),
+                                .id = 116,
+                                .min = 1,
+                                .max = 30,
+                                .defalutValue = 15
+                        }
                 }
             },
             PageOption{
@@ -153,26 +196,30 @@ MenuOption buildMenu() {
                             .label = oxorany("击杀所有NPC"),
                             .id = 301
                     },
+                    CheckItem{
+                            .label = oxorany("自动击杀敌对NPC"),
+                            .id = 302
+                    },
                     TitleItem{
-                            .label =oxorany("Spawn")
+                            .label = oxorany("Spawn")
                     },
                     SliderItem{
                             .label = oxorany("生成延迟"),
-                            .id = 302,
+                            .id = 303,
                             .min = 1,
                             .max = 1000,
                             .defalutValue = 600
                     },
                     SliderItem{
                             .label = oxorany("生成阈值"),
-                            .id = 303,
+                            .id = 304,
                             .min = 0,
                             .max = 200,
                             .defalutValue = 5
                     },
                     CheckItem{
                             .label = oxorany("保持修改"),
-                            .id = 304
+                            .id = 305
                     },
 
 
@@ -312,23 +359,36 @@ std::string GetStringUTF(JNIEnv* env, jstring jst) {
 void OnLoaded() {
     BNM::BasicHook(Main::Instance().Update_m, TerrariaMainUpdate,old_MainUpdate);
     BNM::BasicHook(Main::Instance().UpdateWorldPreparationState_m, UpdateWorldPreparationState_HOOK,old_UpdateWorldPreparationState_m);
+    BNM::BasicHook(Main::Instance().Initialize_m, MainInitializeHOOK, old_MainInitialize);
+    BNM::BasicHook(Main::Instance().DrawBlack_m, DrawBlackHOOK, old_DrawBlack);
+    BNM::BasicHook(Main::Instance().TriggerPing_m, TriggerPingHook, old_TriggerPing);
     BNM::BasicHook(Player::Instance().ItemCheckWrapped_m, PlayerCheckItemHook,old_PlayerCheckItem);
     BNM::BasicHook(Player::Instance().ResetEffects_m, PlayerResetEffectsHook,old_PlayerResetEffects);
     BNM::BasicHook(Player::Instance().RecalculateLuck_m, RecalculateLuck_HOOK,old_RecalculateLuck_m);
-    BNM::BasicHook(Projectile::Instance().FishingCheck_RollItemDrop_m,FishingCheck_RollItemDropHook, old_FishingCheck_RollItemDrop);
-    BNM::BasicHook(Player::Instance().ItemCheck_UseMiningTools_ActuallyUseMiningTool_m, ItemCheck_UseMiningTools_ActuallyUseMiningToolHOOK, old_ItemCheck_UseMiningTools_ActuallyUseMiningTool_m);
-    BNM::BasicHook(Main::Instance().TriggerPing_m, TriggerPingHook, old_TriggerPing);
-    BNM::BasicHook(Spawner::Instance().GetSpawnRate_m, GetSpawnRate_HOOK, old_GetSpawnRate_m);
-    BNM::BasicHook(MessageBuffer::Instance().TrySendingItemArray_m, TrySendingItemArray_HOOK, old_TrySendingItemArray_m);
-    BNM::BasicHook(SelectedItemState::Instance().Select_m, SelectedItemStateSelect_HOOK, old_SelectedItemStateSelect);
-    BNM::BasicHook(SelectedItemState::Instance().Update_m, SelectedItemStateUpdate_HOOK, old_SelectedItemStateUpdate);
-    BNM::BasicHook(Player::Instance().ItemCheck_StartActualUse_m, ItemCheck_StartActualUseHOOK, old_ItemCheck_StartActualUse);
-    BNM::BasicHook(TileDrawing::Instance().DrawSingleTile_Flames_m, TileDrawHOOK, old_TileDraw);
-    BNM::BasicHook(Main::Instance().DrawBlack_m, DrawBlackHOOK, old_DrawBlack);
     BNM::BasicHook(Player::Instance().Update_m, PlayerUpdateHook, old_PlayerUpdate);
     BNM::BasicHook(Player::Instance().TileCollision_m, TileCollisionHOOK, old_TileCollision);
     BNM::BasicHook(Player::Instance().SlopeDownMovement_m, SlopeDownMovementHOOK, old_SlopeDownMovement);
-    //BNM::BasicHook(Player::Instance().DryCollision_m, DryCollisionHOOK, old_DryCollision);
+    BNM::BasicHook(Player::Instance().ItemCheck_StartActualUse_m, ItemCheck_StartActualUseHOOK, old_ItemCheck_StartActualUse);
+    BNM::BasicHook(Player::Instance().GetRespawnTime_m, PlayerGetRespawnTimeHOOK, old_PlayerGetRespawnTime);
+    BNM::BasicHook(Player::Instance().Teleport_m, PlayerTeleportHOOK, old_PlayerTeleport);
+    BNM::BasicHook(Player::Instance().DryCollision_m, DryCollisionHOOK, old_DryCollision);
+    BNM::BasicHook(Player::Instance().SlopingCollision_m, SlopingCollisionHOOK, old_SlopingCollision);
+    BNM::BasicHook(Player::Instance().WetCollision_m, WetCollisionHOOK, old_WetCollision);
+    BNM::BasicHook(Player::Instance().AddBuff_m, AddBuffHOOK, old_AddBuff);
+    BNM::BasicHook(Player::Instance().ItemCheck_UseMiningTools_ActuallyUseMiningTool_m, ItemCheck_UseMiningTools_ActuallyUseMiningToolHOOK, old_ItemCheck_UseMiningTools_ActuallyUseMiningTool_m);
+    BNM::BasicHook(Collision::Instance().StepUp_m, SetUpHOOK, old_SetUp);
+    BNM::BasicHook(Collision::Instance().StepDown_m, SetDownHOOK, old_SetDown);
+    BNM::BasicHook(Projectile::Instance().FishingCheck_RollItemDrop_m,FishingCheck_RollItemDropHook, old_FishingCheck_RollItemDrop);
+    BNM::BasicHook(Spawner::Instance().GetSpawnRate_m, GetSpawnRate_HOOK, old_GetSpawnRate_m);
+    BNM::BasicHook(MessageBuffer::Instance().TrySendingItemArray_m, TrySendingItemArray_HOOK, old_TrySendingItemArray_m);
+    BNM::BasicHook(MessageBuffer::Instance().ProcessData_m, ProcessDataHOOK, old_ProcessData);
+    BNM::BasicHook(SelectedItemState::Instance().Select_m, SelectedItemStateSelect_HOOK, old_SelectedItemStateSelect);
+    BNM::BasicHook(SelectedItemState::Instance().Update_m, SelectedItemStateUpdate_HOOK, old_SelectedItemStateUpdate);
+    BNM::BasicHook(TileDrawing::Instance().DrawSingleTile_Flames_m, TileDrawHOOK, old_TileDraw);
+    BNM::BasicHook(ChatHelper::Instance().DisplayMessage_m, DisplayMessage, old_DisplayMessage);
+    BNM::BasicHook(NetMessage::Instance().DecompressTileBlock_Inner_m,  DecompressTileBlock_InnerHook, old_DecompressTileBlock_Inner);
+    BNM::BasicHook(Recipe::Instance().SetupRecipes_m, SetupRecipesHOOK, old_SetupRecipes);
+    BNM::BasicHook(ItemID::Instance().ctor, ItemIDCtorHook, old_ItemIDCtor);
 }
 
 extern "C"{
@@ -343,7 +403,6 @@ extern "C"{
     JNIEXPORT void JNICALL
     Java_zig_cheat_qq_jni_Jni_Callback(JNIEnv* env, jclass clazz, jint id, jboolean check, jint value, jfloat value2, jstring value3) {
         auto& state =  UIState::getPanelState<UIState::PanelState>();
-        //if(state.GameMenu) return;
         auto& playerState = UIState::getPanelState<UIState::PlayerState>();
         auto& worldState = UIState::getPanelState<UIState::WolldState>();
         auto& npcState = UIState::getPanelState<UIState::NPCState>();
@@ -354,22 +413,30 @@ extern "C"{
             case 102: playerState.InfiniteReach = check; break;
             case 103: playerState.InfiniteMana = check; break;
             case 104: playerState.AutoAim = check; break;
-            case 105: FullLigth(check); break;
-            case 106: playerState.KillTileRect = check; break;
-            case 107: playerState.KillWallRect   = check; break;
-            case 108: playerState.DestructionRange = value; break;
+            case 105: playerState.bestow = check; break;
+            case 106: playerState.AllowTeleport = check; break;
+            case 107: Main::UnLockAchievements(); break;
+            case 108: FullLigth(check); break;
             case 109: playerState.ghost = check; break;
+            case 110: playerState.ghostSpeed = value; break;
+            case 111: playerState.KillTileRect = check; break;
+            case 112: playerState.KillWallRect = check; break;
+            case 113: playerState.DestructionRange = value; break;
+            case 114: playerState.respawn = check; break;
+            case 115: playerState.interceptRespawnPack = check; break;
+            case 116: playerState.respawnSecond = value; break;
             case 200: if(check) Main::LigthMap(); break;
             case 201: worldState.MapTeleport = check; break;
             case 202: ProcessTimeStringRobust(GetStringUTF(env, value3)); break;
             case 203: worldState.WorldInvasion = static_cast<Invasion>(value + 1); break;
             case 204: StartInvasion(worldState.WorldInvasion); break;
             case 205: StopInvasion(); break;
-            case 300: NPC::KillHostileNpc(); break;
-            case 301: NPC::KillAll(); break;
-            case 302: npcState.defaultSpawnRate = value; break;
-            case 303: npcState.defaultMaxSpawns = value; break;
-            case 304: npcState.modifySpawn = check; break;
+            case 300: NPC::ButcherAllHostileNPCs(); break;
+            case 301: NPC::ButcherAllNPCs(); break;
+            case 302: npcState.AutoButcherNPC = check; break;
+            case 303: npcState.defaultSpawnRate = value; break;
+            case 304: npcState.defaultMaxSpawns = value; break;
+            case 305: npcState.modifySpawn = check; break;
             case 400: fishState.AutoFish = check; break;
             case 401: fishState.AutoFish_Item = check; break;
             case 402: fishState.AutoFish_NPC = check; break;
@@ -628,12 +695,13 @@ extern "C"{
 
     JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void * reserved)
     {
+        g_vm = vm;
         JNIEnv *env;
         vm->GetEnv((void **) &env, JNI_VERSION_1_6);
-
         BNM::Loading::AllowLateInitHook();
         BNM::Loading::AddOnLoadedEvent(OnLoaded);
         BNM::Loading::TryLoadByJNI(env);
+        Tools::InitJniHelper(env);
         return JNI_VERSION_1_6;
     }
 }

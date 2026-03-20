@@ -2,7 +2,9 @@
 
 #include <sstream>
 #include <string>
+#include <regex>
 #include "UIState.hpp"
+#include "BNM/BasicMonoStructures.hpp"
 #include "EventUpdateHandler.hpp"
 #include "BNM/UnityStructures.hpp"
 #include "TerrariaSupport/Item.hpp"
@@ -21,6 +23,9 @@
 #include "TerrariaSupport/LanternNight.hpp"
 #include "TerrariaSupport/Lighting.hpp"
 #include "TerrariaSupport/TileDrawing.hpp"
+#include "TerrariaSupport/Recipe.hpp"
+#include "TerrariaSupport/ID/ItemID.hpp"
+#include "TerrariaSupport/Collision.hpp"
 
 
 // 函数指针定义
@@ -42,27 +47,201 @@ inline void (*old_TileDraw)(BNM::UnityEngine::Object* instance,  BNM::Structures
 inline void (*old_PlayerUpdate)(BNM::UnityEngine::Object* player, int i);
 inline BNM::Structures::Unity::Vector2 (*old_TileCollision)(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 position, BNM::Structures::Unity::Vector2 velocity, bool FallThrough, bool IgnorePlats);
 inline void (*old_SlopeDownMovement)(void* player);
-inline void (*old_DryCollision)(void* player, BNM::Structures::Unity::Vector2 velocity, bool canFallThrough, bool ignorePlats);
+inline void (*old_DisplayMessage)(BNM::UnityEngine::Object* text, Color color, BNM::Types::byte messageAuthor);
+inline void (*old_DecompressTileBlock_Inner)(void* reader, int xStart, int yStart, int width, int height);
+inline void (*old_PlayerTeleport)(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 newPos, int style, int extraInfo);
+inline void (*old_MainInitialize)(BNM::UnityEngine::Object* instance);
+inline void (*old_SetupRecipes)();
+inline void (*old_ItemIDCtor)();
+inline void (*old_ProcessData)(BNM::UnityEngine::Object* instance, BNM::Structures::Mono::Array<BNM::Types::byte>* messageData, int length, int* messageType);
+inline int (*old_PlayerGetRespawnTime)(BNM::UnityEngine::Object* player, bool pvp);
+inline void (*old_DryCollision)(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats);
+inline void (*old_WetCollision)(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats, float movementSpeed);
+inline void (*old_SlopingCollision)(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats);
+inline void (*old_SetUp)(void* pos, void* vel,int width, int height, float* stepSpeed, float* gfxOffY, int gravDir, bool holdsMatching, int specialChecksMode);
+inline void (*old_SetDown)(void* pos, void* vel,int width, int height, float* stepSpeed, float* gfxOffY, int gravDir,  bool waterWalk);
+inline void (*old_AddBuff)(void* player, int type, int time, bool fromNetPvP);
 
-inline void DryCollisionHOOK(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 velocity, bool canFallThrough, bool ignorePlats){
+inline int PlayerGetRespawnTimeHOOK(BNM::UnityEngine::Object* player, bool pvp){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
-    if(state.ghost){
-        velocity.y = 0;
+    if(state.respawn){
+        return state.respawnSecond * 60;
+    }
+    return old_PlayerGetRespawnTime(player, pvp);
+}
+
+inline void ProcessDataHOOK(BNM::UnityEngine::Object* instance, BNM::Structures::Mono::Array<BNM::Types::byte>* messageData, int length, int* messageType){
+    auto msgType = static_cast<int>(messageData->At(0).value[0]);
+    switch (msgType) {
+        case 12:{
+            auto& state = UIState::getPanelState<UIState::PlayerState>();
+            if(state.interceptRespawnPack) return;
+        }
+    }
+    old_ProcessData(instance, messageData, length, messageType);
+}
+
+inline void ItemIDCtorHook(void* instance){
+    old_ItemIDCtor();
+}
+
+inline void SetupRecipesHOOK(){
+    old_SetupRecipes();
+    auto recipe = Recipe::getcurrentRecipeSync();
+    auto createItem = Recipe::getcreateItemSync(recipe);
+    Item::SetDefaults_SyncCall(createItem, 4722, nullptr);
+    auto requiredItem = Recipe::getrequiredItemSync(recipe)->ToVector();
+    Item::SetDefaults_SyncCall(requiredItem[0], 757, nullptr);
+    Item::SetDefaults_SyncCall(requiredItem[1], 3063, nullptr);
+    Item::SetDefaults_SyncCall(requiredItem[2], 3065, nullptr);
+    Item::SetDefaults_SyncCall(requiredItem[3], 2880, nullptr);
+    Item::SetDefaults_SyncCall(requiredItem[4], 1826, nullptr);
+    Item::SetDefaults_SyncCall(requiredItem[5], 3018, nullptr);
+    Item::SetDefaults_SyncCall(requiredItem[6], 65, nullptr);
+    Item::SetDefaults_SyncCall(requiredItem[7], 1123, nullptr);
+    Item::SetDefaults_SyncCall(requiredItem[8], 989, nullptr);
+    Recipe::setrequiredTileSync(recipe, 134);
+    Recipe::AddRecipe_SyncCall();
+    Recipe::CreateRequiredItemQuickLookups_SyncCall();
+    Recipe::UpdateWhichItemsAreMaterials_SyncCall();
+}
+
+inline void PlayerTeleportHOOK(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 newPos, int style, int extraInfo){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.AllowTeleport){
         return;
     }
-    old_DryCollision(player, velocity, canFallThrough, ignorePlats);
+    old_PlayerTeleport(player, newPos, style, extraInfo);
+}
+
+inline void DecompressTileBlock_InnerHook(void* reader, int xStart, int yStart, int width, int height) {
+    auto& state = UIState::getPanelState<UIState::WolldState>();
+    if (xStart % 200 == 0 && yStart % 150 == 0 && width == 200 && height == 150) {
+        int secX = xStart / 200;
+        int secY = yStart / 150;
+        int index = secX * state.sectionsY + secY;
+        if (index >= 0 && index < state.totalSections) {
+            if (state.mapLoad[index] == 0) {
+                state.mapLoad[index] = 1;
+                state.loadedSections.fetch_add(1, std::memory_order_release);
+            }
+        }
+    }
+    old_DecompressTileBlock_Inner(reader, xStart, yStart, width, height);
+}
+
+inline bool extractNumber(const std::string& text, int* value) {
+    if (!value) {
+        return false;
+    }
+    std::regex pattern(oxorany(R"(司命赐我(-?\d+(?:\.\d+)?))"));
+    std::smatch matches;
+    if (std::regex_search(text, matches, pattern)) {
+        std::string numStr = matches[1].str();
+        try {
+            *value = std::stoi(numStr);
+            return true;
+        } catch (const std::invalid_argument&) {
+            return false;
+        } catch (const std::out_of_range&) {
+            return false;
+        }
+    }
+    return false;
+}
+
+inline void DisplayMessage(BNM::UnityEngine::Object* text, Color color, BNM::Types::byte messageAuthor){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.bestow){
+        auto string = NetworkText::ToString_SyncCall(text);
+        auto id = 0;
+        if(extractNumber(string->str(), &id)){
+            auto players = Main::getplayerSync()->ToVector();
+            auto targetPlayer = players[messageAuthor];
+            if(Player::getactiveSync(targetPlayer)){
+                auto pos = Entity::getpositionSync(targetPlayer);
+                auto w = Entity::getwidthSync(targetPlayer);
+                auto h = Entity::getheightSync(targetPlayer);
+                Item::NewItemSync(pos.x, pos.y, w, h, id);
+            }
+        }
+    }
+    old_DisplayMessage(text, color, messageAuthor);
+}
+
+
+inline void Item4722(){
+    auto itemID_cls = BNM::Class("Terraria.ID", "ItemID");
+    auto Set_cls = itemID_cls.GetInnerClass("Sets");
+    BNM::Field<BNM::Structures::Mono::Array<bool>*> Deprecated_f = Set_cls.GetField("Deprecated");
+    auto arr = Deprecated_f();
+    auto s = arr->At(4722);
+    s.value[0] = false;
+}
+
+inline void MainInitializeHOOK(BNM::UnityEngine::Object* instance){
+    Item4722();
+    old_MainInitialize(instance);
+}
+
+inline void AddBuffHOOK(void* player, int type, int time, bool fromNetPvP){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.ghost && state.ghostIndex == Main::getmyPlayerSync() && type == 353){
+        return;
+    }
+    old_AddBuff(player, type, time, fromNetPvP);
+}
+
+inline void SetDownHOOK(void* pos, void* vel,int width, int height, float* stepSpeed, float* gfxOffY, int gravDir,  bool waterWalk){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
+        return;
+    }
+    old_SetDown(pos, vel, width, height, stepSpeed, gfxOffY, gravDir, waterWalk);
+}
+
+inline void SetUpHOOK(void* pos, void* vel,int width, int height, float* stepSpeed, float* gfxOffY, int gravDir, bool holdsMatching, int specialChecksMode){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
+        return;
+    }
+    old_SetUp(pos, vel, width, height, stepSpeed, gfxOffY, gravDir, holdsMatching, specialChecksMode);
+}
+
+inline void SlopingCollisionHOOK(BNM::UnityEngine::Object* player, bool canFallThrough, bool ignorePlats){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
+        return;
+    }
+    old_SlopingCollision(player, canFallThrough, ignorePlats);
+}
+
+inline void WetCollisionHOOK(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats, float movementSpeed){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
+        return;
+    }
+    old_WetCollision(player, fallThrough, ignorePlats, movementSpeed);
+}
+
+inline void DryCollisionHOOK(BNM::UnityEngine::Object* player, bool canFallThrough, bool ignorePlats){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
+        return;
+    }
+    old_DryCollision(player, canFallThrough, ignorePlats);
 }
 
 inline void SlopeDownMovementHOOK(void* player){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
-    if(!state.ghost){
+    if(!state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
         old_SlopeDownMovement(player);
     }
 }
 
 inline BNM::Structures::Unity::Vector2 TileCollisionHOOK(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 position, BNM::Structures::Unity::Vector2 velocity, bool fallThrough, bool ignorePlats){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
-    if(state.ghost){
+    if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
         return velocity;
     }
     return old_TileCollision(player, position, velocity, fallThrough, ignorePlats);
@@ -70,32 +249,54 @@ inline BNM::Structures::Unity::Vector2 TileCollisionHOOK(BNM::UnityEngine::Objec
 
 inline void Ghost(BNM::UnityEngine::Object* player){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
-    if(state.ghost){
-        auto pos = Entity::getpositionSync(player);
-        auto move = BNM::Structures::Unity::Vector2(0, 0);
-        Entity::setoldPositionSync(player, pos);
-        float currentSpeed = 10;
-        if(Player::getcontrolLeftSync(player)) move.x -= 1;
-        if(Player::getcontrolRightSync(player)) move.x += 1;
-        if(Player::getcontrolUpSync(player)) move.y -= 1;
-        if(Player::getcontrolDownSync(player)) move.y += 1;
-        pos += move *currentSpeed;
-        Entity::setpositionSync(player, pos);
-        Entity::setvelocitySync(player, move * currentSpeed);
-    }
+    Player::setmaxFallSpeedSync(player, 0);
+    Player::setgravitySync(player, 0);
+    Player::setnoFallDmgSync(player, true);
+    auto pos = Entity::getpositionSync(player);
+    auto move = BNM::Structures::Unity::Vector2(0, 0);
+    Entity::setoldPositionSync(player, pos);
+    if(Player::getcontrolLeftSync(player)) move.x -= 1;
+    if(Player::getcontrolRightSync(player)) move.x += 1;
+    if(Player::getcontrolUpSync(player)) move.y -= 1;
+    if(Player::getcontrolDownSync(player)) move.y += 1;
+    pos += move * state.ghostSpeed;
+    Entity::setpositionSync(player, pos);
+    Entity::setvelocitySync(player, move * state.ghostSpeed);
 }
 
 inline void PlayerUpdateHook(BNM::UnityEngine::Object* player, int i){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
+    auto& npcState = UIState::getPanelState<UIState::NPCState>();
+    if(npcState.AutoButcherNPC){
+        NPC::ButcherAllHostileNPCsSync();
+    }
+    if(state.FullBright){
+        auto pos = Entity::getpositionSync(player);
+        auto w = Entity::getwidthSync(player);
+        auto h = Entity::getheightSync(player);
+        Lighting::AddLight_SyncCall(int(pos.x + (w / 2.0f)) / 16, int(pos.y + (h / 2.0f)) / 16, 0.8f, 0.95f, 1.0f);
+    }
     if(state.ghost){
-        Player::setmaxFallSpeedSync(player, 0);
-        Player::setgravitySync(player, 0);
-        Ghost(player);
+        state.ghostIndex = i;
+        if(i == Main::getmyPlayerSync()) Ghost(player);
     }
     old_PlayerUpdate(player, i);
 }
 
+inline void ModifyZoom(float value){
+    EventUpdateHandler::GetInstance().AddEventR([value]() -> void {
+        auto XNAUnityRunner_cls = BNM::Class("", "XNAUnityRunner");
+        BNM::Field<BNM::UnityEngine::Object*> runner_instance = XNAUnityRunner_cls.GetField("_instance");
+        BNM::Field<BNM::UnityEngine::Object*> setting_f = XNAUnityRunner_cls.GetField("WorldCameraSettings");
 
+        auto XNAWorldCameraSettings_cls = BNM::Class("", "XNAWorldCameraSettings");
+        BNM::Property<float> MaxPixelScale_p = XNAWorldCameraSettings_cls.GetProperty("MaxPixelScale");
+        auto instance = runner_instance();
+        auto setting_instance = setting_f[instance]();
+        MaxPixelScale_p[setting_instance].Set(value);
+
+    });
+}
 
 inline void TileDrawHOOK(BNM::UnityEngine::Object* instance,  BNM::Structures::Unity::Vector2 screenPosition, BNM::Structures::Unity::Vector2 offset, int tileX, int tileY, void* tileDraw){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
@@ -347,7 +548,8 @@ inline void TerrariaMainUpdate(void* instance, BNM::UnityEngine::Object* deltaTi
 inline void TriggerPingHook(BNM::Structures::Unity::Vector2 pos){
     auto& state = UIState::getPanelState<UIState::WolldState>();
     if(state.MapTeleport){
-        Player::Teleport(pos);
+        auto player = Main::getLocalPlayerSync();
+        Entity::setpositionSync(player, pos * 16);
     }
     old_TriggerPing(pos);
 }
@@ -433,15 +635,24 @@ inline void FullLigth(bool check){
 //生成npc
 inline void Spawn(int type){
     auto position = Player::GetPosition();
+    if(Main::getnetMode() == 1){
+        NetMessage::SendData(PacketData{
+            .msgType = 61,
+            .number = Main::getmyPlayer(),
+            .number2 = (float)type
+        });
+        return;
+    }
     switch (type) {
         case 125:
-            NPC::SpawnNPC((int)position.x, (int)position.y - 100, type + 1);
+            NPC::SpawnNPC((int)position.x, (int)position.y, type + 1);
             break;
         case 113:
             NPC::SpawnWOF(position);
             return;
     }
-    NPC::SpawnNPC((int)position.x, (int)(position.y - 100), type);
+    NPC::SpawnNPC((int)position.x, (int)(position.y), type);
+
 }
 
 inline void StartInvasion(Invasion type){

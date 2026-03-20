@@ -1,8 +1,24 @@
-//
-// Created by admin on 2026/3/16.
-//
+#pragma once
+#include "TerrariaBase.hpp"
 
-#ifndef TEMPLATE_ZIG_CHATHELPER_HPP
-#define TEMPLATE_ZIG_CHATHELPER_HPP
+#define STATIC_LANG_METHOD_LIST \
+    T(void, DisplayMessage)
 
-#endif //TEMPLATE_ZIG_CHATHELPER_HPP
+class ChatHelper : public TerrariaBase<ChatHelper> {
+private:
+    ChatHelper() : TerrariaBase(oxorany("Terraria.Chat"), oxorany("ChatHelper")) {
+#define T(returnType, name) INIT_METHOD(name)
+        STATIC_LANG_METHOD_LIST
+#undef T
+    }
+    friend class TerrariaBase<ChatHelper>;
+
+public:
+#define T(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+    STATIC_LANG_METHOD_LIST
+#undef T
+
+#define T(returnType, name) DEFINE_STATIC_METHOD_WRAPPER(returnType, name)
+    STATIC_LANG_METHOD_LIST
+#undef T
+};

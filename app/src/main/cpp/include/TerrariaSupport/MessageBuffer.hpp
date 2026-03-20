@@ -2,7 +2,8 @@
 #include "TerrariaBase.hpp"
 
 #define INSTANCE_MESSAGE_BUFFER_METHOD_LIST \
-    Z(void, TrySendingItemArray)
+    Z(void, TrySendingItemArray)            \
+    Z(void, ProcessData)
 
 class MessageBuffer : public TerrariaBase<MessageBuffer> {
 private:
