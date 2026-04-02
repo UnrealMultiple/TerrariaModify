@@ -2,24 +2,38 @@
 
 #include "TerrariaBase.hpp"
 
-#define INSTANCE_TILEDRAW_METHODS(T) \
-    T(void, Draw_V2ScaleV2) \
-    T(void, Draw_V2ScaleFloat) \
-    T(void, Draw_Fast_Color) \
-    T(void, Draw_Fast_VertexColors)
+#define INSTANCE_BATCH_METHODS(T)           \
+    T(void, Draw_Fast_Color)                \
+    T(void, Draw_Fast_VertexColors)         \
+    T(void, DrawF)                          \
+    T(void, DrawD)
 
 class SpriteBatch : public TerrariaBase<SpriteBatch> {
 private:
-    SpriteBatch() : TerrariaBase(oxorany("Microsoft.Xna.Framework.Graphics.SpriteBatch"), oxorany("SpriteBatch")) {
-        Draw_V2ScaleV2_m = _class.GetMethod(oxorany("Draw"), { oxorany("texture"), oxorany("position"), oxorany("sourceRectangle"), oxorany("color"), oxorany("rotation"), oxorany("origin"), oxorany("scale"), oxorany("effects"), oxorany("layerDepth") });
-        Draw_V2ScaleFloat_m = _class.GetMethod(oxorany("Draw"), { oxorany("texture"), oxorany("position"), oxorany("sourceRectangle"), oxorany("color"), oxorany("rotation"), oxorany("origin"), oxorany("scale"), oxorany("effects"), oxorany("layerDepth") });
-        Draw_Fast_Color_m = _class.GetMethod(oxorany("Draw_Fast"), { oxorany("texture"), oxorany("position"), oxorany("srcRect"), oxorany("color"), oxorany("effects") });
-        Draw_Fast_VertexColors_m = _class.GetMethod(oxorany("Draw_Fast"), { oxorany("texture"), oxorany("position"), oxorany("srcRect"), oxorany("color"), oxorany("effects") });
+    SpriteBatch() : TerrariaBase(oxorany("Microsoft.Xna.Framework.Graphics"), oxorany("SpriteBatch")) {
+        Draw_Fast_Color_m = _class.GetMethod(oxorany("Draw_Fast"), {
+            BNM::CompileTimeClassBuilder(oxorany("Microsoft.Xna.Framework.Graphics"), oxorany("Texture2D")).Build(),
+            BNM::CompileTimeClassBuilder(oxorany("Microsoft.Xna.Framework"), oxorany("Vector2")).Build(),
+            BNM::CompileTimeClassBuilder(oxorany("Microsoft.Xna.Framework"), oxorany("Rectangle")).Build(),
+            BNM::CompileTimeClassBuilder(oxorany("Microsoft.Xna.Framework.Graphics"), oxorany("Color")).Build(),
+            BNM::CompileTimeClassBuilder(oxorany("Microsoft.Xna.Framework.Graphics"), oxorany("SpriteEffects")).Build()
+
+        });
+        Draw_Fast_VertexColors_m = _class.GetMethod(oxorany("Draw_Fast"), {
+            BNM::CompileTimeClassBuilder(oxorany("Microsoft.Xna.Framework.Graphics"), oxorany("Texture2D")).Build(),
+            BNM::CompileTimeClassBuilder(oxorany("Microsoft.Xna.Framework"), oxorany("Vector2")).Build(),
+            BNM::CompileTimeClassBuilder(oxorany("Microsoft.Xna.Framework"), oxorany("Rectangle")).Build(),
+            BNM::CompileTimeClassBuilder(oxorany("Terraria.Graphics"), oxorany("VertexColors")).Build(),
+            BNM::CompileTimeClassBuilder(oxorany("Microsoft.Xna.Framework.Graphics"), oxorany("SpriteEffects")).Build()
+        });
+        //Microsoft.Xna.Framework.Rectangle
+//        Draw_Fast_Color_m = _class.GetMethod(oxorany("Draw_Fast"), { oxorany("texture"), oxorany("position"), oxorany("srcRect"), oxorany("color"), oxorany("effects") });
+//        Draw_Fast_VertexColors_m = _class.GetMethod(oxorany("Draw_Fast"), { oxorany("texture"), oxorany("position"), oxorany("srcRect"), oxorany("color"), oxorany("effects") });
     }
     friend class TerrariaBase<SpriteBatch>;
 
 public:
 #define T(returnType, name) DECLARE_METHOD(returnType, name)
-    INSTANCE_TILEDRAW_METHODS(T)
+    INSTANCE_BATCH_METHODS(T)
 #undef T
 };

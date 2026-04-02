@@ -7,35 +7,37 @@
 #include "Tools/Tools.h"
 
 
-#define MAIN_STATIC_FIELD_LIST \
-    S(bool, dayTime) \
-    S(double, time) \
-    S(BNM::UnityEngine::Object*, tile) \
-    S(BNM::Structures::Mono::Array<BNM::UnityEngine::Object*>*, npc) \
-    S(BNM::UnityEngine::Object*, rand) \
-    S(BNM::UnityEngine::Object*, GameViewMatrix)    \
+#define MAIN_STATIC_FIELD_LIST                                              \
+    S(bool, dayTime)                                                        \
+    S(double, time)                                                         \
+    S(BNM::UnityEngine::Object*, tile)                                      \
+    S(BNM::Structures::Mono::Array<BNM::UnityEngine::Object*>*, npc)        \
+    S(BNM::UnityEngine::Object*, rand)                                      \
+    S(BNM::UnityEngine::Object*, GameViewMatrix)                            \
     S(BNM::Structures::Mono::Array<BNM::UnityEngine::Object*>*, projectile) \
     S(BNM::Structures::Mono::Array<BNM::UnityEngine::Object*>*, player)     \
-    S(BNM::UnityEngine::Object*, instance) \
-    S(int, netMode) \
-    S(float, GameZoomTarget)   \
-    S(int, maxTilesX)          \
-    S(int, maxTilesY)          \
-    S(int, maxSectionsX)       \
-    S(int, maxSectionsY)       \
-    S(int, invasionSizeStart)  \
-    S(int, invasionSize)       \
-    S(int, moonPhase)          \
-    S(bool, bloodMoon)         \
-    S(bool, eclipse)           \
-    S(bool, pumpkinMoon)       \
-    S(bool, snowMoon)          \
-    S(float, windSpeedCurrent) \
-    S(float, windSpeedTarget)  \
-    S(BNM::Structures::Mono::Array<bool>*, tileSolid)  \
-    S(bool, drawToScreen)
+    S(BNM::UnityEngine::Object*, instance)                                  \
+    S(int, netMode)                                                         \
+    S(float, GameZoomTarget)                                                \
+    S(int, maxTilesX)                                                       \
+    S(int, maxTilesY)                                                       \
+    S(int, maxSectionsX)                                                    \
+    S(int, maxSectionsY)                                                    \
+    S(int, invasionSizeStart)                                               \
+    S(int, invasionSize)                                                    \
+    S(int, moonPhase)                                                       \
+    S(bool, bloodMoon)                                                      \
+    S(bool, eclipse)                                                        \
+    S(bool, pumpkinMoon)                                                    \
+    S(bool, snowMoon)                                                       \
+    S(float, windSpeedCurrent)                                              \
+    S(float, windSpeedTarget)                                               \
+    S(BNM::Structures::Mono::Array<bool>*, tileSolid)                       \
+    S(bool, drawToScreen)                                                   \
+    S(BNM::Structures::Mono::Array<bool>*, tileSolidTop)                    \
+    S(int, offScreenRange)
 
-#define MAIN_STATIC_PROPERTY_LIST \
+#define MAIN_STATIC_PROPERTY_LIST                                       \
     P(BNM::UnityEngine::Object*, LocalPlayer) \
     P(BNM::UnityEngine::Object*, Map) \
     P(bool, refreshMap) \
@@ -88,19 +90,19 @@ private:
 
 public:
 
-#define S(type, name) DECLARE_STATIC_FIELD(type, name)
+#define S(type, name) DECLARE_FIELD(type, name)
     MAIN_STATIC_FIELD_LIST
 #undef S
 
-#define P(type, name) DECLARE_STATIC_PROPERTY(type, name)
+#define P(type, name) DECLARE_PROPERTY(type, name)
     MAIN_STATIC_PROPERTY_LIST
 #undef P
 
-#define M(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+#define M(returnType, name) DECLARE_METHOD(returnType, name)
     MAIN_STATIC_METHOD_LIST
 #undef M
 
-#define I(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+#define I(returnType, name) DECLARE_METHOD(returnType, name)
     MAIN_INSTANCE_METHOD
 #undef I
 

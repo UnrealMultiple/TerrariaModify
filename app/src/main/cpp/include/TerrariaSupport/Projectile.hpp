@@ -55,7 +55,7 @@ public:
     #undef Z
 
 
-    #define T(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+    #define T(returnType, name) DECLARE_METHOD(returnType, name)
         STATIC_PROJECTILE_METHOD_LIST
     #undef T
 
@@ -71,7 +71,7 @@ public:
         STATIC_PROJECTILE_METHOD_LIST
     #undef T
 
-    #define U(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+    #define U(returnType, name) DECLARE_METHOD(returnType, name)
         STATIC_PROJECTILE_OVERLOADS(U)
     #undef U
 

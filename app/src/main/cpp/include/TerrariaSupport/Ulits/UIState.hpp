@@ -19,10 +19,10 @@ namespace UIState {
         bullet_config::BulletConfig ProjectileConfig;
         bool applyProjectile;
         bool GameMenu = true;
-
     };
 
     struct PlayerState{
+        bool GodMode = false;
         bool FullBright = false;
         bool InfiniteMinions = false;
         bool InfiniteMana = false;
@@ -30,6 +30,7 @@ namespace UIState {
         bool KillTileRect = false;
         bool KillWallRect = false;
         bool AutoAim = false;
+        bool AutoButcherPlayer = false;
         int DestructionRange = 40;
         bool ghost = false;
         int ghostSpeed = 25;
@@ -39,6 +40,7 @@ namespace UIState {
         bool respawn = false;
         bool interceptRespawnPack = false;
         int respawnSecond = 15;
+        int FramesSinceLastLifePacket = 0;
     };
 
     struct FishUIState{

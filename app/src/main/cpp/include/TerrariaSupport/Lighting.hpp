@@ -36,12 +36,12 @@ public:
     STATIC_LIGHT_OVERLOADS
 #undef U
 
-#define S(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+#define S(returnType, name) DECLARE_METHOD(returnType, name)
     LIGHT_STATIC_METHOD_LIST
 #undef S
 
 
-#define T(type, name) DECLARE_STATIC_PROPERTY(type, name)
+#define T(type, name) DECLARE_PROPERTY(type, name)
     STATIC_LIGHT_PROPERTY
 #undef T
 

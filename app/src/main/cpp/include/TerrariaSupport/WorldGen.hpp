@@ -15,7 +15,8 @@
     T(void, StartMeteorShower)
 
 #define STATIC_WORLDGEN_OVERLOADS(U) \
-    U(bool, InWorld)
+    U(bool, InWorld)                 \
+    U(bool, SolidTile)
 
 class WorldGen : public TerrariaBase<WorldGen> {
 private:
@@ -29,11 +30,12 @@ private:
 #undef X
 
         InWorld_m = _class.GetMethod(oxorany("InWorld"), {oxorany("x"), oxorany("y"), oxorany("fluff")});
+        SolidTile_m = _class.GetMethod("SolidTile", {"testTile"});
     }
     friend class TerrariaBase<WorldGen>;
 
 public:
-#define X(type, name) DECLARE_STATIC_FIELD(type, name)
+#define X(type, name) DECLARE_FIELD(type, name)
     STATIC_WORLDGEN_FIELD
 #undef X
 
@@ -41,11 +43,11 @@ public:
     STATIC_WORLDGEN_FIELD
 #undef X
 
-#define T(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+#define T(returnType, name) DECLARE_METHOD(returnType, name)
     STATIC_WORLDGEN_METHODS(T)
 #undef T
 
-#define U(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+#define U(returnType, name) DECLARE_METHOD(returnType, name)
     STATIC_WORLDGEN_OVERLOADS(U)
 #undef U
 
@@ -64,7 +66,7 @@ public:
         for (int i = x - radius; i <= x + radius; i++) {
             for (int j = y - radius; j <= y + radius; j++) {
                 if (i >= 0 && i < maxTilesX && j >= 0 && j < maxTilesY) {
-                    if(InWorld_SyncCall(i , j, 0)){
+                    if(InWorld_SyncCall(i , j, 0) && TileData::active(i, j)){
                         KillTile_SyncCall(i, j, false, false, false);
                         if(netMode == 1){
                             NetMessage::SendDataSync(PacketData{

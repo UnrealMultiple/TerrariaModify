@@ -8,6 +8,8 @@
 #include "NetMessage.hpp"
 #include "UnifiedRandom.hpp"
 #include "TileData.hpp"
+#include "TerrariaSupport/Structs/Tile.hpp"
+#include "WorldGen.hpp"
 
 #define INSTANCE_NPC_FIELD_LIST \
     X(int, type)           \
@@ -69,7 +71,7 @@ public:
         INSTANCE_NPC_METHOD_LIST
     #undef Z
 
-    #define T(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+    #define T(returnType, name) DECLARE_METHOD(returnType, name)
     STATIC_NPC_METHOD_LIST
     #undef T
 
@@ -101,6 +103,7 @@ public:
 
     static void GetRandomClearTileWithInRangeSync(int startTileX, int startTileY, int tileXRange, int tileYRange,
                                        int& tileX, int& tileY){
+        auto tile = Main::gettileSync();
         int j = 0;
         do
         {
@@ -113,20 +116,14 @@ public:
             tileX = startTileX + UnifiedRandom::Next(tileXRange * -1, tileXRange);
             tileY = startTileY + UnifiedRandom::Next(tileYRange * -1, tileYRange);
             j++;
-        } while (TileSolidSync(tileX, tileX));
+            LOGI("Tile id %d => %d", TileData::GetType(tileX, tileY), WorldGen::SolidTile_SyncCall(TileData::get_Item_SyncCall(tile, tileX, tileY)));
+        } while (WorldGen::SolidTile_SyncCall(TileData::get_Item_SyncCall(tile, tileX, tileY)));
     }
 
     static bool TilePlacementValid(int tileX, int tileY){
         auto maxTileX = Main::getmaxTilesY();
         auto maxTileY = Main::getmaxTilesY();
         return tileX >= 0 && tileX < maxTileX && tileY >= 0 && tileY < maxTileY;
-    }
-
-    static bool TileSolidSync(int tileX, int tileY){
-        auto tileData = Main::gettileSync();
-        auto tile = TileData::get_Item_SyncCall(tileData, tileX, tileY);
-        auto tileSolid = Main::gettileSolidSync()->ToVector();
-        return tile.active() && tile.inActive() && tile.slope() == 0 && tile.halfBrick() && tileSolid[tile.type] && tile.type != 379 && TilePlacementValid(tileX, tileY);
     }
 
     static void SpawnNPC(int x, int y, int type){

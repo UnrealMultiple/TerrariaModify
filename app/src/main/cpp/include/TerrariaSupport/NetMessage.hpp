@@ -68,12 +68,12 @@ private:
 
 public:
     // ==================== 声明普通静态方法 ====================
-#define T(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+#define T(returnType, name) DECLARE_METHOD(returnType, name)
     STATIC_NET_MESSAGE_METHODS(T)
 #undef T
 
     // ==================== 声明重载方法 ====================
-#define U(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+#define U(returnType, name) DECLARE_METHOD(returnType, name)
     STATIC_NET_MESSAGE_OVERLOADS(U)
 #undef U
 

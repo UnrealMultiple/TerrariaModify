@@ -22,6 +22,8 @@
 #include "TerrariaSupport/TileDrawing.hpp"
 #include "TerrariaSupport/ChatHelper.hpp"
 #include "Tools/Tools.h"
+#include "Dobby/dobby.h"
+
 
 ElfScanner g_il2cppElf;
 JavaVM* g_vm = nullptr;
@@ -82,6 +84,10 @@ MenuOption buildMenu() {
                         CheckItem{
                                 .label = oxorany("地图高亮"),
                                 .id = 108
+                        },
+                        CheckItem{
+                                .label = oxorany("pvp屠杀玩家"),
+                                .id = 117
                         },
                         TitleItem{
                                 .label = oxorany("GHOST")
@@ -366,16 +372,19 @@ void OnLoaded() {
     BNM::BasicHook(Player::Instance().ResetEffects_m, PlayerResetEffectsHook,old_PlayerResetEffects);
     BNM::BasicHook(Player::Instance().RecalculateLuck_m, RecalculateLuck_HOOK,old_RecalculateLuck_m);
     BNM::BasicHook(Player::Instance().Update_m, PlayerUpdateHook, old_PlayerUpdate);
-    BNM::BasicHook(Player::Instance().TileCollision_m, TileCollisionHOOK, old_TileCollision);
     BNM::BasicHook(Player::Instance().SlopeDownMovement_m, SlopeDownMovementHOOK, old_SlopeDownMovement);
     BNM::BasicHook(Player::Instance().ItemCheck_StartActualUse_m, ItemCheck_StartActualUseHOOK, old_ItemCheck_StartActualUse);
     BNM::BasicHook(Player::Instance().GetRespawnTime_m, PlayerGetRespawnTimeHOOK, old_PlayerGetRespawnTime);
     BNM::BasicHook(Player::Instance().Teleport_m, PlayerTeleportHOOK, old_PlayerTeleport);
+    BNM::BasicHook(Player::Instance().TileCollision_m, TileCollisionHOOK, old_TileCollision);
     BNM::BasicHook(Player::Instance().DryCollision_m, DryCollisionHOOK, old_DryCollision);
     BNM::BasicHook(Player::Instance().SlopingCollision_m, SlopingCollisionHOOK, old_SlopingCollision);
     BNM::BasicHook(Player::Instance().WetCollision_m, WetCollisionHOOK, old_WetCollision);
     BNM::BasicHook(Player::Instance().AddBuff_m, AddBuffHOOK, old_AddBuff);
+    BNM::BasicHook(Player::Instance().Hurt_m, PlayerHurtHOOK, old_PLayerHurt);
+    BNM::BasicHook(Player::Instance().KillMe_m, PlayerKillMeHOOK, old_PlayerKillMe);
     BNM::BasicHook(Player::Instance().ItemCheck_UseMiningTools_ActuallyUseMiningTool_m, ItemCheck_UseMiningTools_ActuallyUseMiningToolHOOK, old_ItemCheck_UseMiningTools_ActuallyUseMiningTool_m);
+    BNM::BasicHook(SpriteBatch::Instance().Draw_Fast_Color_m, BatchDrawFastColorHOOK, old_BatchDrawFastColor);
     BNM::BasicHook(Collision::Instance().StepUp_m, SetUpHOOK, old_SetUp);
     BNM::BasicHook(Collision::Instance().StepDown_m, SetDownHOOK, old_SetDown);
     BNM::BasicHook(Projectile::Instance().FishingCheck_RollItemDrop_m,FishingCheck_RollItemDropHook, old_FishingCheck_RollItemDrop);
@@ -384,7 +393,6 @@ void OnLoaded() {
     BNM::BasicHook(MessageBuffer::Instance().ProcessData_m, ProcessDataHOOK, old_ProcessData);
     BNM::BasicHook(SelectedItemState::Instance().Select_m, SelectedItemStateSelect_HOOK, old_SelectedItemStateSelect);
     BNM::BasicHook(SelectedItemState::Instance().Update_m, SelectedItemStateUpdate_HOOK, old_SelectedItemStateUpdate);
-    BNM::BasicHook(TileDrawing::Instance().DrawSingleTile_Flames_m, TileDrawHOOK, old_TileDraw);
     BNM::BasicHook(ChatHelper::Instance().DisplayMessage_m, DisplayMessage, old_DisplayMessage);
     BNM::BasicHook(NetMessage::Instance().DecompressTileBlock_Inner_m,  DecompressTileBlock_InnerHook, old_DecompressTileBlock_Inner);
     BNM::BasicHook(Recipe::Instance().SetupRecipes_m, SetupRecipesHOOK, old_SetupRecipes);
@@ -408,7 +416,7 @@ extern "C"{
         auto& npcState = UIState::getPanelState<UIState::NPCState>();
         auto& fishState = UIState::getPanelState<UIState::FishUIState>();
         switch (id) {
-            case 100: Player::GodMod(check); break;
+            case 100: playerState.GodMode = check; break;
             case 101: playerState.InfiniteMinions = check; break;
             case 102: playerState.InfiniteReach = check; break;
             case 103: playerState.InfiniteMana = check; break;
@@ -425,6 +433,7 @@ extern "C"{
             case 114: playerState.respawn = check; break;
             case 115: playerState.interceptRespawnPack = check; break;
             case 116: playerState.respawnSecond = value; break;
+            case 117: playerState.AutoButcherPlayer = check; break;
             case 200: if(check) Main::LigthMap(); break;
             case 201: worldState.MapTeleport = check; break;
             case 202: ProcessTimeStringRobust(GetStringUTF(env, value3)); break;

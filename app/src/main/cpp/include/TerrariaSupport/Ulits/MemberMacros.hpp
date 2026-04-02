@@ -7,15 +7,12 @@
 
 // ==================== 字段声明 ====================
 #define DECLARE_FIELD(type, name) BNM::Field<type> name##_f;
-#define DECLARE_STATIC_FIELD(type, name) BNM::Field<type> name##_f;
 
 // ==================== 属性声明 ====================
 #define DECLARE_PROPERTY(type, name) BNM::Property<type> name##_p;
-#define DECLARE_STATIC_PROPERTY(type, name) BNM::Property<type> name##_p;
 
 // ==================== 方法声明 ====================
 #define DECLARE_METHOD(returnType, name) BNM::Method<returnType> name##_m;
-#define DECLARE_STATIC_METHOD(returnType, name) BNM::Method<returnType> name##_m;
 
 // ==================== 字段/属性初始化 ====================
 #define INIT_FIELD(name) name##_f = _class.GetField(oxorany(#name));

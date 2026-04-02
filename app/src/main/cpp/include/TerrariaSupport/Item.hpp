@@ -74,7 +74,7 @@ public:
     INSTANCE_ITEM_METHODS(Z)
 #undef Z
 
-#define T(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+#define T(returnType, name) DECLARE_METHOD(returnType, name)
     STATIC_ITEM_METHODS(T)
 #undef T
 

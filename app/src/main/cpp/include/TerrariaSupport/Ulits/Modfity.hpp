@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <regex>
+#include <algorithm>
 #include "UIState.hpp"
 #include "BNM/BasicMonoStructures.hpp"
 #include "EventUpdateHandler.hpp"
@@ -26,42 +27,50 @@
 #include "TerrariaSupport/Recipe.hpp"
 #include "TerrariaSupport/ID/ItemID.hpp"
 #include "TerrariaSupport/Collision.hpp"
+#include "TerrariaSupport/XNAUnityRunner.hpp"
+#include "TerrariaSupport/NPC.hpp"
 
+inline void (*old_PlayerKillMe)(BNM::UnityEngine::Object* player, void* damageSource, int damage, int hitDirection, bool pvp);
+inline void PlayerKillMeHOOK(BNM::UnityEngine::Object* player, void* damageSource, int damage, int hitDirection, bool pvp){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    auto whoAmi = Entity::getwhoAmISync(player);
+    if(state.GodMode && whoAmi == Main::getmyPlayerSync()){
+        return;
+    }
+    old_PlayerKillMe(player, damageSource, damage, hitDirection, pvp);
+}
 
-// 函数指针定义
-inline void (*old_MainUpdate)(void*, BNM::UnityEngine::Object*);
-inline void (*old_TriggerPing)(BNM::Structures::Unity::Vector2);
-inline void (*old_PlayerResetEffects)(BNM::UnityEngine::Object*);
-inline void (*old_PlayerCheckItem)(BNM::UnityEngine::Object*, int);
-inline void (*old_FishingCheck_RollItemDrop)(BNM::UnityEngine::Object* projectile, FishingAttempt* fisher);
-inline void (*old_ItemCheck_UseMiningTools_ActuallyUseMiningTool_m)(BNM::UnityEngine::Object* instance, void* item, bool* canHitWalls, int x, int y);
-inline void (*old_RecalculateLuck_m)(BNM::UnityEngine::Object* player);
-inline void (*old_GetSpawnRate_m)(BNM::UnityEngine::Object* npc, BNM::UnityEngine::Object* player, int* spawnRate, int* maxSpawns);
-inline void (*old_UpdateWorldPreparationState_m)();
-inline void (*old_TrySendingItemArray_m)(int plr, void*, int slotStart);
-inline void (*old_SelectedItemStateUpdate)(void* instance);
-inline void (*old_SelectedItemStateSelect)(void* instance, int item);
-inline void (*old_ItemCheck_StartActualUse)(BNM::UnityEngine::Object*, BNM::UnityEngine::Object*);
-inline void (*old_DrawBlack)(BNM::UnityEngine::Object* instance, bool force);
-inline void (*old_TileDraw)(BNM::UnityEngine::Object* instance,  BNM::Structures::Unity::Vector2 screenPosition, BNM::Structures::Unity::Vector2 offset, int tileX, int TileY, void* tileDraw);
-inline void (*old_PlayerUpdate)(BNM::UnityEngine::Object* player, int i);
-inline BNM::Structures::Unity::Vector2 (*old_TileCollision)(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 position, BNM::Structures::Unity::Vector2 velocity, bool FallThrough, bool IgnorePlats);
-inline void (*old_SlopeDownMovement)(void* player);
-inline void (*old_DisplayMessage)(BNM::UnityEngine::Object* text, Color color, BNM::Types::byte messageAuthor);
-inline void (*old_DecompressTileBlock_Inner)(void* reader, int xStart, int yStart, int width, int height);
-inline void (*old_PlayerTeleport)(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 newPos, int style, int extraInfo);
-inline void (*old_MainInitialize)(BNM::UnityEngine::Object* instance);
-inline void (*old_SetupRecipes)();
-inline void (*old_ItemIDCtor)();
-inline void (*old_ProcessData)(BNM::UnityEngine::Object* instance, BNM::Structures::Mono::Array<BNM::Types::byte>* messageData, int length, int* messageType);
+inline double (*old_PLayerHurt)(BNM::UnityEngine::Object* player, void* damageSource, int damage, int hitDirection, bool pvp, bool quiet, bool Crit, int cooldownCounter, bool dodgeable);
+inline double PlayerHurtHOOK(BNM::UnityEngine::Object* player, void* damageSource, int damage, int hitDirection, bool pvp, bool quiet, bool Crit, int cooldownCounter, bool dodgeable){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    auto whoAmi = Entity::getwhoAmISync(player);
+    if(state.GodMode && whoAmi == Main::getmyPlayerSync()){
+        Player::setstatLifeSync(player, Player::getstatLifeMax2Sync(player));
+        if (state.FramesSinceLastLifePacket == 0){
+            state.FramesSinceLastLifePacket = 6;
+            NetMessage::SendDataSync(PacketData{
+                .msgType = 16,
+                .number = whoAmi
+            });
+        }
+        return 0.0f;
+    }
+    return old_PLayerHurt(player, damageSource, damage, hitDirection, pvp, quiet, Crit, cooldownCounter, dodgeable);
+}
+
+inline void (*old_BatchDrawFastColor)(void* ins, void* texture, BNM::Structures::Unity::Vector2* pos, void* rect, Color* color, int sp);
+inline void BatchDrawFastColorHOOK(void* ins, void* texture, BNM::Structures::Unity::Vector2* pos, void* rect, Color* color, int sp){
+    auto& state = UIState::getPanelState<UIState::PlayerState>();
+    if(state.FullBright){
+        color->R = 255;
+        color->G = 255;
+        color->B = 255;
+        color->A = 255;
+    }
+    old_BatchDrawFastColor(ins, texture,pos, rect, color, sp);
+}
+
 inline int (*old_PlayerGetRespawnTime)(BNM::UnityEngine::Object* player, bool pvp);
-inline void (*old_DryCollision)(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats);
-inline void (*old_WetCollision)(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats, float movementSpeed);
-inline void (*old_SlopingCollision)(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats);
-inline void (*old_SetUp)(void* pos, void* vel,int width, int height, float* stepSpeed, float* gfxOffY, int gravDir, bool holdsMatching, int specialChecksMode);
-inline void (*old_SetDown)(void* pos, void* vel,int width, int height, float* stepSpeed, float* gfxOffY, int gravDir,  bool waterWalk);
-inline void (*old_AddBuff)(void* player, int type, int time, bool fromNetPvP);
-
 inline int PlayerGetRespawnTimeHOOK(BNM::UnityEngine::Object* player, bool pvp){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.respawn){
@@ -70,6 +79,7 @@ inline int PlayerGetRespawnTimeHOOK(BNM::UnityEngine::Object* player, bool pvp){
     return old_PlayerGetRespawnTime(player, pvp);
 }
 
+inline void (*old_ProcessData)(BNM::UnityEngine::Object* instance, BNM::Structures::Mono::Array<BNM::Types::byte>* messageData, int length, int* messageType);
 inline void ProcessDataHOOK(BNM::UnityEngine::Object* instance, BNM::Structures::Mono::Array<BNM::Types::byte>* messageData, int length, int* messageType){
     auto msgType = static_cast<int>(messageData->At(0).value[0]);
     switch (msgType) {
@@ -81,10 +91,12 @@ inline void ProcessDataHOOK(BNM::UnityEngine::Object* instance, BNM::Structures:
     old_ProcessData(instance, messageData, length, messageType);
 }
 
+inline void (*old_ItemIDCtor)();
 inline void ItemIDCtorHook(void* instance){
     old_ItemIDCtor();
 }
 
+inline void (*old_SetupRecipes)();
 inline void SetupRecipesHOOK(){
     old_SetupRecipes();
     auto recipe = Recipe::getcurrentRecipeSync();
@@ -106,6 +118,7 @@ inline void SetupRecipesHOOK(){
     Recipe::UpdateWhichItemsAreMaterials_SyncCall();
 }
 
+inline void (*old_PlayerTeleport)(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 newPos, int style, int extraInfo);
 inline void PlayerTeleportHOOK(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 newPos, int style, int extraInfo){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.AllowTeleport){
@@ -114,6 +127,7 @@ inline void PlayerTeleportHOOK(BNM::UnityEngine::Object* player, BNM::Structures
     old_PlayerTeleport(player, newPos, style, extraInfo);
 }
 
+inline void (*old_DecompressTileBlock_Inner)(void* reader, int xStart, int yStart, int width, int height);
 inline void DecompressTileBlock_InnerHook(void* reader, int xStart, int yStart, int width, int height) {
     auto& state = UIState::getPanelState<UIState::WolldState>();
     if (xStart % 200 == 0 && yStart % 150 == 0 && width == 200 && height == 150) {
@@ -150,6 +164,7 @@ inline bool extractNumber(const std::string& text, int* value) {
     return false;
 }
 
+inline void (*old_DisplayMessage)(BNM::UnityEngine::Object* text, Color color, BNM::Types::byte messageAuthor);
 inline void DisplayMessage(BNM::UnityEngine::Object* text, Color color, BNM::Types::byte messageAuthor){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.bestow){
@@ -179,11 +194,14 @@ inline void Item4722(){
     s.value[0] = false;
 }
 
+inline void (*old_MainInitialize)(BNM::UnityEngine::Object* instance);
 inline void MainInitializeHOOK(BNM::UnityEngine::Object* instance){
     Item4722();
     old_MainInitialize(instance);
 }
 
+
+inline void (*old_AddBuff)(void* player, int type, int time, bool fromNetPvP);
 inline void AddBuffHOOK(void* player, int type, int time, bool fromNetPvP){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.ghost && state.ghostIndex == Main::getmyPlayerSync() && type == 353){
@@ -192,6 +210,7 @@ inline void AddBuffHOOK(void* player, int type, int time, bool fromNetPvP){
     old_AddBuff(player, type, time, fromNetPvP);
 }
 
+inline void (*old_SetDown)(void* pos, void* vel,int width, int height, float* stepSpeed, float* gfxOffY, int gravDir,  bool waterWalk);
 inline void SetDownHOOK(void* pos, void* vel,int width, int height, float* stepSpeed, float* gfxOffY, int gravDir,  bool waterWalk){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
@@ -200,6 +219,7 @@ inline void SetDownHOOK(void* pos, void* vel,int width, int height, float* stepS
     old_SetDown(pos, vel, width, height, stepSpeed, gfxOffY, gravDir, waterWalk);
 }
 
+inline void (*old_SetUp)(void* pos, void* vel,int width, int height, float* stepSpeed, float* gfxOffY, int gravDir, bool holdsMatching, int specialChecksMode);
 inline void SetUpHOOK(void* pos, void* vel,int width, int height, float* stepSpeed, float* gfxOffY, int gravDir, bool holdsMatching, int specialChecksMode){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
@@ -208,6 +228,7 @@ inline void SetUpHOOK(void* pos, void* vel,int width, int height, float* stepSpe
     old_SetUp(pos, vel, width, height, stepSpeed, gfxOffY, gravDir, holdsMatching, specialChecksMode);
 }
 
+inline void (*old_SlopingCollision)(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats);
 inline void SlopingCollisionHOOK(BNM::UnityEngine::Object* player, bool canFallThrough, bool ignorePlats){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
@@ -216,6 +237,7 @@ inline void SlopingCollisionHOOK(BNM::UnityEngine::Object* player, bool canFallT
     old_SlopingCollision(player, canFallThrough, ignorePlats);
 }
 
+inline void (*old_WetCollision)(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats, float movementSpeed);
 inline void WetCollisionHOOK(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats, float movementSpeed){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
@@ -224,6 +246,7 @@ inline void WetCollisionHOOK(BNM::UnityEngine::Object* player, bool fallThrough,
     old_WetCollision(player, fallThrough, ignorePlats, movementSpeed);
 }
 
+inline void (*old_DryCollision)(BNM::UnityEngine::Object* player, bool fallThrough, bool ignorePlats);
 inline void DryCollisionHOOK(BNM::UnityEngine::Object* player, bool canFallThrough, bool ignorePlats){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
@@ -232,6 +255,7 @@ inline void DryCollisionHOOK(BNM::UnityEngine::Object* player, bool canFallThrou
     old_DryCollision(player, canFallThrough, ignorePlats);
 }
 
+inline void (*old_SlopeDownMovement)(void* player);
 inline void SlopeDownMovementHOOK(void* player){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(!state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
@@ -239,6 +263,7 @@ inline void SlopeDownMovementHOOK(void* player){
     }
 }
 
+inline BNM::Structures::Unity::Vector2 (*old_TileCollision)(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 position, BNM::Structures::Unity::Vector2 velocity, bool FallThrough, bool IgnorePlats);
 inline BNM::Structures::Unity::Vector2 TileCollisionHOOK(BNM::UnityEngine::Object* player, BNM::Structures::Unity::Vector2 position, BNM::Structures::Unity::Vector2 velocity, bool fallThrough, bool ignorePlats){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.ghost && state.ghostIndex == Main::getmyPlayerSync()){
@@ -264,17 +289,53 @@ inline void Ghost(BNM::UnityEngine::Object* player){
     Entity::setvelocitySync(player, move * state.ghostSpeed);
 }
 
+inline void ViewHighlight()
+{
+    auto runner = XNAUnityRunner::get_instanceSync();
+    auto offset = XNAUnityRunner::getIncrementalBatchingSync(runner) ? XNAUnityRunner::getIncrementalBatchingOffsetSync(runner) : BNM::Structures::Unity::Vector2(0, 0);
+    int screenWidth = Main::getscreenWidthSync();
+    int screenHeight = Main::getscreenHeightSync();
+    auto screenPosition = Main::getscreenPositionSync();
+    int maxTilesX = Main::getmaxTilesXSync();
+    int maxTilesY = Main::getmaxTilesYSync();
+    const float invTileSize = 1.0f / 16.0f; // 0.0625f
+    int firstTileX = (int)((screenPosition.x - offset.x) * invTileSize - 1.0f);
+    int firstTileY = (int)((screenPosition.y - offset.y) * invTileSize - 1.0f);
+    int lastTileX = (int)((screenPosition.x + screenWidth + offset.x) * invTileSize) + 1;
+    int lastTileY = (int)((screenPosition.y + screenHeight + offset.y) * invTileSize) + 1;
+    const int safeMargin = 4;
+    const int b = 10;
+    firstTileX = std::max(firstTileX - b, safeMargin);
+    firstTileY = std::max(firstTileY - b, safeMargin);
+    lastTileX  = std::min(lastTileX + b,  maxTilesX - safeMargin);
+    lastTileY  = std::min(lastTileY + b,  maxTilesY - safeMargin);
+    for (int x = firstTileX; x < lastTileX; x+=3){
+        for (int y = firstTileY; y < lastTileY; y+=3){
+            Lighting::AddLight_SyncCall(x, y, 1.0f, 1.0f, 1.0f);
+        }
+    }
+}
+
+inline void (*old_PlayerUpdate)(BNM::UnityEngine::Object* player, int i);
 inline void PlayerUpdateHook(BNM::UnityEngine::Object* player, int i){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     auto& npcState = UIState::getPanelState<UIState::NPCState>();
     if(npcState.AutoButcherNPC){
         NPC::ButcherAllHostileNPCsSync();
     }
-    if(state.FullBright){
-        auto pos = Entity::getpositionSync(player);
-        auto w = Entity::getwidthSync(player);
-        auto h = Entity::getheightSync(player);
-        Lighting::AddLight_SyncCall(int(pos.x + (w / 2.0f)) / 16, int(pos.y + (h / 2.0f)) / 16, 0.8f, 0.95f, 1.0f);
+    if(state.AutoButcherPlayer){
+        Player::ButcherAllPla yerSync();
+    }
+    if(i == Main::getmyPlayerSync()){
+        if(state.FramesSinceLastLifePacket > 0){
+            state.FramesSinceLastLifePacket--;
+        }
+        if(state.FullBright){
+            auto pos = Entity::getpositionSync(player);
+            auto w = Entity::getwidthSync(player);
+            auto h = Entity::getheightSync(player);
+            ViewHighlight();
+        }
     }
     if(state.ghost){
         state.ghostIndex = i;
@@ -283,21 +344,7 @@ inline void PlayerUpdateHook(BNM::UnityEngine::Object* player, int i){
     old_PlayerUpdate(player, i);
 }
 
-inline void ModifyZoom(float value){
-    EventUpdateHandler::GetInstance().AddEventR([value]() -> void {
-        auto XNAUnityRunner_cls = BNM::Class("", "XNAUnityRunner");
-        BNM::Field<BNM::UnityEngine::Object*> runner_instance = XNAUnityRunner_cls.GetField("_instance");
-        BNM::Field<BNM::UnityEngine::Object*> setting_f = XNAUnityRunner_cls.GetField("WorldCameraSettings");
-
-        auto XNAWorldCameraSettings_cls = BNM::Class("", "XNAWorldCameraSettings");
-        BNM::Property<float> MaxPixelScale_p = XNAWorldCameraSettings_cls.GetProperty("MaxPixelScale");
-        auto instance = runner_instance();
-        auto setting_instance = setting_f[instance]();
-        MaxPixelScale_p[setting_instance].Set(value);
-
-    });
-}
-
+inline void (*old_TileDraw)(BNM::UnityEngine::Object* instance,  BNM::Structures::Unity::Vector2 screenPosition, BNM::Structures::Unity::Vector2 offset, int tileX, int TileY, void* tileDraw);
 inline void TileDrawHOOK(BNM::UnityEngine::Object* instance,  BNM::Structures::Unity::Vector2 screenPosition, BNM::Structures::Unity::Vector2 offset, int tileX, int tileY, void* tileDraw){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(state.FullBright){
@@ -307,6 +354,7 @@ inline void TileDrawHOOK(BNM::UnityEngine::Object* instance,  BNM::Structures::U
     old_TileDraw(instance,screenPosition, offset, tileX, tileY, tileDraw);
 }
 
+inline void (*old_DrawBlack)(BNM::UnityEngine::Object* instance, bool force);
 inline void DrawBlackHOOK(BNM::UnityEngine::Object* instance, bool force){
     auto& state = UIState::getPanelState<UIState::PlayerState>();
     if(!state.FullBright){
@@ -314,6 +362,7 @@ inline void DrawBlackHOOK(BNM::UnityEngine::Object* instance, bool force){
     }
 }
 
+inline void (*old_ItemCheck_UseMiningTools_ActuallyUseMiningTool_m)(BNM::UnityEngine::Object* instance, void* item, bool* canHitWalls, int x, int y);
 inline void ItemCheck_UseMiningTools_ActuallyUseMiningToolHOOK(BNM::UnityEngine::Object* instance, void* item, bool* canHitWalls, int x, int y){
     auto& playerState = UIState::getPanelState<UIState::PlayerState>();
     if(playerState.KillTileRect && WorldGen:: InWorld_SyncCall(x, y, 0)){
@@ -322,6 +371,7 @@ inline void ItemCheck_UseMiningTools_ActuallyUseMiningToolHOOK(BNM::UnityEngine:
     old_ItemCheck_UseMiningTools_ActuallyUseMiningTool_m(instance, item, canHitWalls, x, y);
 }
 
+inline void (*old_SelectedItemStateSelect)(void* instance, int item);
 inline void SelectedItemStateSelect_HOOK(void* instance, int item){
     old_SelectedItemStateSelect(instance, item);
     auto player = Main::getLocalPlayerSync();
@@ -350,6 +400,7 @@ inline void SelectedItemStateSelect_HOOK(void* instance, int item){
     itemState.placeStyle =Item::getplaceStyleSync(selectItem);
 }
 
+inline void (*old_SelectedItemStateUpdate)(void* instance);
 inline void SelectedItemStateUpdate_HOOK(void* instance){
     old_SelectedItemStateUpdate(instance);
     auto player = Main::getLocalPlayerSync();
@@ -378,6 +429,8 @@ inline void SelectedItemStateUpdate_HOOK(void* instance){
     itemState.placeStyle =Item::getplaceStyleSync(selectItem);
 
 }
+
+inline void (*old_TrySendingItemArray_m)(int plr, void*, int slotStart);
 inline void TrySendingItemArray_HOOK(int plr, void* items, int slotStart){
     old_TrySendingItemArray_m(plr, items, slotStart);
     NetMessage::SendDataSync(PacketData{
@@ -389,12 +442,14 @@ inline void TrySendingItemArray_HOOK(int plr, void* items, int slotStart){
     });
 }
 
+inline void (*old_UpdateWorldPreparationState_m)();
 inline void UpdateWorldPreparationState_HOOK(){
     old_UpdateWorldPreparationState_m();
     auto& state = UIState::getPanelState<UIState::PanelState>();
     state.GameMenu = Main::getgameMenuSync();
 }
 
+inline void (*old_GetSpawnRate_m)(BNM::UnityEngine::Object* npc, BNM::UnityEngine::Object* player, int* spawnRate, int* maxSpawns);
 inline void GetSpawnRate_HOOK(BNM::UnityEngine::Object* npc, BNM::UnityEngine::Object* player, int* spawnRate, int* maxSpawns){
     auto& state = UIState::getPanelState<UIState::NPCState>();
     if(state.modifySpawn){
@@ -405,6 +460,7 @@ inline void GetSpawnRate_HOOK(BNM::UnityEngine::Object* npc, BNM::UnityEngine::O
     old_GetSpawnRate_m(npc, player, spawnRate, maxSpawns);
 }
 
+inline void (*old_RecalculateLuck_m)(BNM::UnityEngine::Object* player);
 inline void RecalculateLuck_HOOK(BNM::UnityEngine::Object* player){
 //    auto& state = UIState::getPanelState<UIState::PlayerState>();
 //    if(state.setLuck){
@@ -414,6 +470,7 @@ inline void RecalculateLuck_HOOK(BNM::UnityEngine::Object* player){
     old_RecalculateLuck_m(player);
 }
 
+inline void (*old_FishingCheck_RollItemDrop)(BNM::UnityEngine::Object* projectile, FishingAttempt* fisher);
 inline void FishingCheck_RollItemDropHook(BNM::UnityEngine::Object* projectile, FishingAttempt* fisher){
     old_FishingCheck_RollItemDrop(projectile, fisher);
     auto& uiState = UIState::getPanelState<UIState::FishUIState>();
@@ -535,16 +592,15 @@ inline void AutoFish_Checke(){
 }
 
 
-// 函数定义
+inline void (*old_MainUpdate)(void*, BNM::UnityEngine::Object*);
 inline void TerrariaMainUpdate(void* instance, BNM::UnityEngine::Object* deltaTime){
     EventUpdateHandler::GetInstance().Update();
     AutoFish_Checke();
-    //Ghost();
     old_MainUpdate(instance, deltaTime);
 }
 
 
-
+inline void (*old_TriggerPing)(BNM::Structures::Unity::Vector2);
 inline void TriggerPingHook(BNM::Structures::Unity::Vector2 pos){
     auto& state = UIState::getPanelState<UIState::WolldState>();
     if(state.MapTeleport){
@@ -554,11 +610,15 @@ inline void TriggerPingHook(BNM::Structures::Unity::Vector2 pos){
     old_TriggerPing(pos);
 }
 
+inline void (*old_PlayerResetEffects)(BNM::UnityEngine::Object*);
 inline void PlayerResetEffectsHook(BNM::UnityEngine::Object* player){
     old_PlayerResetEffects(player);
 
     if(Entity::getwhoAmISync(player) == Main::getmyPlayerSync()){
         auto state = UIState::getPanelState<UIState::PlayerState>();
+        if(state.GodMode){
+            Player::setstatLifeSync(player, Player::getstatLifeMax2Sync(player));
+        }
         if(state.InfiniteMinions){
             Player::InfiniteMinionsSync(player);
         }
@@ -571,6 +631,7 @@ inline void PlayerResetEffectsHook(BNM::UnityEngine::Object* player){
     }
 }
 
+inline void (*old_ItemCheck_StartActualUse)(BNM::UnityEngine::Object*, BNM::UnityEngine::Object*);
 inline void ItemCheck_StartActualUseHOOK(BNM::UnityEngine::Object* player, BNM::UnityEngine::Object* item){
     auto& playerState = UIState::getPanelState<UIState::PlayerState>();
     auto& state = UIState::getPanelState<UIState::PanelState>();
@@ -601,6 +662,7 @@ inline void ItemCheck_StartActualUseHOOK(BNM::UnityEngine::Object* player, BNM::
     old_ItemCheck_StartActualUse(player, item);
 }
 
+inline void (*old_PlayerCheckItem)(BNM::UnityEngine::Object*, int);
 inline void PlayerCheckItemHook(BNM::UnityEngine::Object* player, int i){
     auto& playerState = UIState::getPanelState<UIState::PlayerState>();
     if(playerState.AutoAim && Player::getitemTimeSync(player) <= 0){

@@ -20,7 +20,7 @@ private:
 
 public:
 
-#define T(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+#define T(returnType, name) DECLARE_METHOD(returnType, name)
     STATIC_COLLISOION_METHOD_LIST
 #undef T
 

@@ -27,7 +27,7 @@ public:
     INSTANCE_LANGUAGE_MANAGER_METHOD_LIST
 #undef Z
 
-#define S(type, name) DECLARE_STATIC_FIELD(type, name)
+#define S(type, name) DECLARE_FIELD(type, name)
     STATIC_LANGUAGE_MANAGER_FIELD_LIST
 #undef S
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TerrariaBase.hpp"
+#include "PlayerDeathReason.hpp"
 
 #define INSTANCE_PLAYER_FIELD_LIST \
     X(int, maxMinions)   \
@@ -24,7 +25,9 @@
     X(bool, controlDown)           \
     X(float, gravity)              \
     X(bool, noFallDmg)              \
-    X(float, maxFallSpeed)
+    X(float, maxFallSpeed)         \
+    X(bool, hostile)               \
+    X(int, statDefense)
 
 #define INSTANCE_PLAYER_PROPERTY_LIST \
     Y(int, tileRangeX)       \
@@ -50,7 +53,8 @@
     Z(void, Update)                 \
     Z(void, KillMe)                 \
     Z(void, GetRespawnTime)         \
-    Z(void, SlopingCollision)
+    Z(void, SlopingCollision)       \
+    Z(double, Hurt)
 
 class Player : public TerrariaBase<Player> {
 private:
@@ -95,6 +99,31 @@ public:
     #define Z(returnType, name) DEFINE_INSTANCE_METHOD_WRAPPER(returnType, name)
         INSTANCE_PLAYER_METHOD_LIST
     #undef Z
+
+    static void ButcherAllPlayerSync(int damage = 1000, int hitCount = -1){
+        auto players = Main::getplayerSync()->ToVector();
+        for (auto player : players){
+            if(Entity::getwhoAmISync(player) != Main::getmyPlayerSync() && Player::gethostileSync(player)){
+                ButcherPlayer(player, damage, hitCount);
+            }
+        }
+    }
+
+    static void ButcherPlayer(BNM::UnityEngine::Object* player, int damage = 1000, int hitCount = -1){
+        int trueHitCount = hitCount;
+        if (hitCount == -1)
+        {
+            trueHitCount = (int)ceil((float)(Player::getstatLifeSync(player) + Player::getstatDefenseSync(player) / 2) / (float)damage);
+        }
+        for (int j = 0; j < trueHitCount; j++)
+        {
+            NetMessage::SendPlayerDeath_SyncCall(Entity::getwhoAmISync(player), PlayerDeathReason::ByPlayer_SyncCall(Main::getmyPlayerSync()), damage, 0, true, -1, -1);
+        }
+        NetMessage::SendDataSync(PacketData{
+            .msgType = 13,
+            .number = Main::getmyPlayerSync()
+        });
+    }
 
     static void GodMod(bool enabled){
         EventUpdateHandler::GetInstance().AddEventR([enabled] () -> void{

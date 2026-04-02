@@ -25,7 +25,7 @@ private:
     friend class TerrariaBase<Sandstorm>;
 
 public:
-#define X(type, name) DECLARE_STATIC_FIELD(type, name)
+#define X(type, name) DECLARE_FIELD(type, name)
     STATIC_WORLDGEN_FIELD
 #undef X
 
@@ -33,7 +33,7 @@ public:
     STATIC_WORLDGEN_FIELD
 #undef X
 
-#define T(returnType, name) DECLARE_STATIC_METHOD(returnType, name)
+#define T(returnType, name) DECLARE_METHOD(returnType, name)
     STATIC_WORLDGEN_METHODS(T)
 #undef T
 
